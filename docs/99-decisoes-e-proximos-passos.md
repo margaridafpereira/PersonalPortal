@@ -54,11 +54,15 @@ Conclusão: sem scraping deixa de haver a carga concorrente pesada em que o Go b
 
 **Fase 0: estudo** ✅ (este documento)
 
-**Fase 1: fundações (1 a 2 semanas)**
-- Repositório, solução .NET com módulos, Docker, CI
-- Autenticação, perfil e preferências
-- Contrato de módulo e painel inicial com cartões
-- Ficheiro de indexantes 2026
+**Fase 1: fundações** 🟡 em curso
+- [x] Repositório e solução .NET com módulos
+- [x] Autenticação, perfil e preferências
+- [x] Contrato de módulo e painel inicial com cartões
+- [x] Ficheiro de indexantes 2026
+- [x] Frontend: entrar/registar, painel, perfil, preferências
+- [ ] Correr o frontend num computador pessoal (o proxy da empresa bloqueia o Vite)
+- [ ] Repositório no GitHub pessoal, CI (GitHub Actions), Dockerfile
+- [ ] PostgreSQL alojado (Neon ou Supabase) e migrações EF
 
 **Fase 2: radar de apoios, V1 (2 a 3 semanas)**
 - Motor de regras com os 7 apoios do catálogo e testes por perfis-tipo

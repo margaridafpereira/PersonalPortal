@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Portal.Core.Perfil;
 
 /// <summary>
@@ -46,6 +48,7 @@ public class PerfilUtilizador
     }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<CategoriaRendimento>))]
 public enum CategoriaRendimento
 {
     Nenhum,
@@ -54,6 +57,7 @@ public enum CategoriaRendimento
     Ambos,
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<SituacaoHabitacao>))]
 public enum SituacaoHabitacao
 {
     Arrenda,

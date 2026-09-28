@@ -11,7 +11,13 @@ As duas áreas ligam-se através do perfil. Quem tem até 35 anos e procura casa
 
 ## Documentação
 
-Estado: **fase de estudo** (fontes de dados). Pesquisa feita a 28/09/2026.
+Estado: **fase 1 (fundações)**: backend com contas, perfil, preferências e painel modular; frontend React. Estudo das fontes de dados feito a 28/09/2026.
+
+```bash
+dotnet run --project src/Portal.Api --launch-profile http   # API
+cd web && npm install && npm run dev                        # frontend
+dotnet test                                                 # 18 testes
+```
 
 | Documento | Conteúdo |
 |---|---|
@@ -23,3 +29,4 @@ Estado: **fase de estudo** (fontes de dados). Pesquisa feita a 28/09/2026.
 | [docs/casas/02-questoes-legais.md](docs/casas/02-questoes-legais.md) | Termos de uso, direito das bases de dados e RGPD |
 | [docs/casas/03-como-ver-anuncios.md](docs/casas/03-como-ver-anuncios.md) | Como ver anúncios do Idealista, Imovirtual, Casa Yes… sem scraping |
 | [docs/99-decisoes-e-proximos-passos.md](docs/99-decisoes-e-proximos-passos.md) | Decisões em aberto e plano |
+| [docs/desenvolvimento.md](docs/desenvolvimento.md) | Estrutura do código, como correr, como acrescentar uma secção |
