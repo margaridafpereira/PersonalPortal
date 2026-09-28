@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Portal.Core\Portal.Core.csproj" />
+    <ProjectReference Include="..\Portal.Modules.Apoios\Portal.Modules.Apoios.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

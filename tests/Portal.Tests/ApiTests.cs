@@ -1,8 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Portal.Core.Modulos;
 using Portal.Core.Perfil;
+using Portal.Modules.Anuncios.Mercado;
 
 namespace Portal.Tests;
 
@@ -15,6 +18,7 @@ public sealed class PortalFactory : WebApplicationFactory<Program>
     {
         builder.UseSetting("BaseDeDados:Fornecedor", "Sqlite");
         builder.UseSetting("ConnectionStrings:Portal", $"Data Source={_ficheiro};Pooling=False");
+        builder.ConfigureTestServices(s => s.AddSingleton<IMercadoImobiliario, MercadoFalso>());
     }
 
     protected override void Dispose(bool disposing)
@@ -26,7 +30,9 @@ public sealed class PortalFactory : WebApplicationFactory<Program>
 
 public class ApiTests(PortalFactory factory) : IClassFixture<PortalFactory>
 {
-    private async Task<HttpClient> ClienteAutenticadoAsync()
+    private Task<HttpClient> ClienteAutenticadoAsync() => ClienteAutenticadoAsync(factory);
+
+    public static async Task<HttpClient> ClienteAutenticadoAsync(PortalFactory factory)
     {
         var cliente = factory.CreateClient();
         var email = $"{Guid.NewGuid():N}@exemplo.pt";

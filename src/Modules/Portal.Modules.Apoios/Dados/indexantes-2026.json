@@ -2,12 +2,50 @@
   "ano": 2026,
   "verificadoEm": "2026-09-28",
   "valores": {
-    "ias": { "valor": 537.13, "descricao": "Indexante dos Apoios Sociais", "fonte": "https://www.montepio.org/ei/pessoal/gestao-diaria/tabela-do-abono-de-familia-escaloes-e-valores/" },
-    "limiteEscalao6Irs": { "valor": 43090, "descricao": "Limite do 6.º escalão de IRS (Porta 65, apoio à renda)", "fonte": "https://www.doutorfinancas.pt/vida-e-familia/habitacao/porta-65-jovem-e-porta-65-o-que-esta-em-vigor-em-2026/" },
-    "limiteIsencaoIrsJovem": { "valor": 29542.15, "descricao": "Limite anual da isenção IRS Jovem (55 × IAS)", "fonte": "https://www.deco.proteste.pt/dinheiro/impostos/dicas/irs-jovem-como-funciona" },
-    "imtJovemIsencaoTotal": { "valor": 330539, "descricao": "IMT Jovem: isenção total até", "fonte": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/IMT_Jovem/Pages/default.aspx" },
-    "imtJovemIsencaoParcial": { "valor": 660982, "descricao": "IMT Jovem: isenção parcial até", "fonte": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/IMT_Jovem/Pages/default.aspx" },
-    "garantiaPublicaValorMaximo": { "valor": 450000, "descricao": "Garantia pública: valor máximo do imóvel", "fonte": "https://www.cgd.pt/Site/Saldo-Positivo/o-banco-e-eu/Pages/Como-funciona-a-garantia-do-Estado.aspx" },
-    "idadeMaximaJovem": { "valor": 35, "descricao": "Idade máxima em IRS Jovem, Porta 65, IMT Jovem e garantia pública", "fonte": "https://www.deco.proteste.pt/dinheiro/impostos/dicas/irs-jovem-como-funciona" }
+    "ias": {
+      "valor": 537.13,
+      "descricao": "Indexante dos Apoios Sociais",
+      "fonte": "https://www.montepio.org/ei/pessoal/gestao-diaria/tabela-do-abono-de-familia-escaloes-e-valores/"
+    },
+    "limiteEscalao6Irs": {
+      "valor": 43090,
+      "descricao": "Limite do 6.º escalão de IRS (Porta 65, apoio à renda)",
+      "fonte": "https://www.doutorfinancas.pt/vida-e-familia/habitacao/porta-65-jovem-e-porta-65-o-que-esta-em-vigor-em-2026/"
+    },
+    "limiteIsencaoIrsJovem": {
+      "valor": 29542.15,
+      "descricao": "Limite anual da isenção IRS Jovem (55 × IAS)",
+      "fonte": "https://www.deco.proteste.pt/dinheiro/impostos/dicas/irs-jovem-como-funciona"
+    },
+    "imtJovemIsencaoTotal": {
+      "valor": 330539,
+      "descricao": "IMT Jovem: isenção total até",
+      "fonte": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/IMT_Jovem/Pages/default.aspx"
+    },
+    "imtJovemIsencaoParcial": {
+      "valor": 660982,
+      "descricao": "IMT Jovem: isenção parcial até",
+      "fonte": "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/IMT_Jovem/Pages/default.aspx"
+    },
+    "garantiaPublicaValorMaximo": {
+      "valor": 450000,
+      "descricao": "Garantia pública: valor máximo do imóvel",
+      "fonte": "https://www.cgd.pt/Site/Saldo-Positivo/o-banco-e-eu/Pages/Como-funciona-a-garantia-do-Estado.aspx"
+    },
+    "idadeMaximaJovem": {
+      "valor": 35,
+      "descricao": "Idade máxima em IRS Jovem, Porta 65, IMT Jovem e garantia pública",
+      "fonte": "https://www.deco.proteste.pt/dinheiro/impostos/dicas/irs-jovem-como-funciona"
+    },
+    "iasPedidosNovosAbono": {
+      "valor": 522.5,
+      "descricao": "IAS de 2025, usado nos pedidos novos de abono de família feitos em 2026",
+      "fonte": "https://www.montepio.org/ei/pessoal/gestao-diaria/tabela-do-abono-de-familia-escaloes-e-valores/"
+    },
+    "apoioRendaMaximoMensal": {
+      "valor": 200,
+      "descricao": "Apoio extraordinário à renda: valor máximo mensal",
+      "fonte": "https://www.deco.proteste.pt/dinheiro/arrendamento/noticias/apoio-extraordinario-renda-quem-tem-direito-como-pedir"
+    }
   }
 }

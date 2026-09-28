@@ -8,9 +8,16 @@ public sealed record CartaoPainel(
     string Titulo,
     string Resumo,
     IReadOnlyList<ItemCartao> Itens,
-    IReadOnlyList<string> CamposPerfilEmFalta);
+    IReadOnlyList<string> CamposPerfilEmFalta)
+{
+    /// <summary>Números em destaque no cartão (ex.: "3 apoios prováveis").</summary>
+    public IReadOnlyList<Indicador> Indicadores { get; init; } = [];
+}
 
 public sealed record ItemCartao(string Texto, string? Detalhe = null, string? Link = null);
+
+/// <param name="Tom">"positivo", "aviso" ou "neutro": o frontend escolhe a cor.</param>
+public sealed record Indicador(string Valor, string Rotulo, string Tom = "neutro");
 
 /// <summary>O que um módulo sabe sobre quem está a usar o portal.</summary>
 /// <remarks>Os módulos são criados antes do contentor de DI; usam <see cref="Servicos"/> para obter o que registaram.</remarks>

@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Portal.Core.Modulos;
 using Portal.Core.Perfil;
-using Portal.Modules.Anuncios;
 using Portal.Modules.Apoios;
 
 namespace Portal.Tests;
@@ -44,31 +43,23 @@ public class ModulosTests
 
         Assert.Equal("apoios", cartao.ModuloId);
         Assert.Equal(modulo.CamposPerfil.Count, cartao.CamposPerfilEmFalta.Count);
-        Assert.DoesNotContain(cartao.Itens, i => i.Texto.Contains("IRS Jovem"));
-    }
-
-    [Theory]
-    [InlineData("1995-03-10", true)]  // 31 anos
-    [InlineData("1990-01-01", false)] // 36 anos
-    public async Task Cartao_apoios_mostra_idade_jovem_ate_35(string nascimento, bool esperaItemJovem)
-    {
-        var perfil = new PerfilUtilizador { DataNascimento = DateOnly.Parse(nascimento) };
-
-        var cartao = await new ModuloApoios().ObterCartaoAsync(Contexto(perfil), default);
-
-        Assert.Equal(esperaItemJovem, cartao.Itens.Any(i => i.Texto.Contains("IRS Jovem")));
+        Assert.Empty(cartao.Itens);
     }
 
     [Fact]
-    public async Task Cartao_anuncios_resume_a_procura()
+    public async Task Cartao_apoios_conta_os_apoios_provaveis()
     {
-        var perfil = new PerfilUtilizador { ProcuraComprarCasa = true, OrcamentoCompra = 300000, Concelho = "Sintra" };
+        var perfil = new PerfilUtilizador
+        {
+            DataNascimento = new DateOnly(1998, 4, 1),
+            ResidenteFiscal = true,
+            Dependente = false,
+            CategoriaRendimento = CategoriaRendimento.TrabalhoDependente,
+        };
 
-        var cartao = await new ModuloAnuncios().ObterCartaoAsync(Contexto(perfil), default);
+        var cartao = await new ModuloApoios().ObterCartaoAsync(Contexto(perfil), default);
 
-        Assert.Empty(cartao.CamposPerfilEmFalta);
-        var item = Assert.Single(cartao.Itens);
-        Assert.Contains("Sintra", item.Texto);
-        Assert.Contains("300", item.Texto);
+        Assert.Equal("1", cartao.Indicadores[0].Valor); // IRS Jovem
+        Assert.Equal("IRS Jovem", Assert.Single(cartao.Itens).Texto);
     }
 }

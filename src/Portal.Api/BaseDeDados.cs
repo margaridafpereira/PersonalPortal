@@ -17,7 +17,7 @@ public static class BaseDeDados
 
         servicos.AddDbContext<PortalDbContext>(o => _ = fornecedor switch
         {
-            "Sqlite" => o.UseSqlite(ligacao),
+            "Sqlite" => o.UseSqlite(ligacao, b => b.MigrationsAssembly(typeof(BaseDeDados).Assembly.GetName().Name)),
             "Postgres" => o.UseNpgsql(ligacao),
             _ => throw new InvalidOperationException($"Fornecedor de base de dados desconhecido: {fornecedor}"),
         });
@@ -25,13 +25,13 @@ public static class BaseDeDados
     }
 
     /// <summary>
-    /// Fase 1: cria o esquema se não existir. As migrações EF entram quando o esquema estabilizar
-    /// e a base de produção (PostgreSQL) estiver escolhida.
+    /// Aplica as migrações pendentes no arranque. As migrações em Migrations/ são para SQLite;
+    /// quando a base PostgreSQL entrar, terá o seu próprio conjunto (ver docs/desenvolvimento.md).
     /// </summary>
     public static async Task PrepararBaseDeDadosAsync(this WebApplication app)
     {
         await using var scope = app.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalDbContext>();
-        await db.Database.EnsureCreatedAsync();
+        await db.Database.MigrateAsync();
     }
 }

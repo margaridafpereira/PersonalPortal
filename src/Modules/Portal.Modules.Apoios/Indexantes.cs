@@ -20,6 +20,11 @@ public static class ChavesIndexantes
     public const string LimiteEscalao6Irs = "limiteEscalao6Irs";
     public const string GarantiaPublicaValorMaximo = "garantiaPublicaValorMaximo";
     public const string IdadeMaximaJovem = "idadeMaximaJovem";
+    public const string LimiteIsencaoIrsJovem = "limiteIsencaoIrsJovem";
+    public const string ImtJovemIsencaoTotal = "imtJovemIsencaoTotal";
+    public const string ImtJovemIsencaoParcial = "imtJovemIsencaoParcial";
+    public const string IasPedidosNovosAbono = "iasPedidosNovosAbono";
+    public const string ApoioRendaMaximoMensal = "apoioRendaMaximoMensal";
 }
 
 public interface IFonteIndexantes

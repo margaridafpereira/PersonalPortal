@@ -1,46 +1,123 @@
 import { useEffect, useState } from 'react'
-import { api, nomesCampos, type CartaoPainel } from '../api'
+import { api, nomesCampos, type CartaoPainel, type Perfil } from '../api'
+import { Icone, type NomeIcone } from '../componentes/Icone'
 
-export function Painel() {
+const aparencia: Record<string, { icone: NomeIcone; cor: string; acao: string }> = {
+  apoios: { icone: 'escudo', cor: 'verde', acao: 'Ver apoios e prazos' },
+  anuncios: { icone: 'casa', cor: 'azul', acao: 'Abrir anúncios' },
+}
+
+// Campos que contam para a barra de "perfil completo".
+const camposPerfil: (keyof Perfil)[] = [
+  'dataNascimento', 'concelho', 'residenteFiscal', 'dependente', 'categoriaRendimento',
+  'rendimentoAnualAgregado', 'numeroAdultos', 'situacaoHabitacao', 'procuraComprarCasa',
+]
+
+function saudacao() {
+  const h = new Date().getHours()
+  return h < 12 ? 'Bom dia' : h < 20 ? 'Boa tarde' : 'Boa noite'
+}
+
+export function Painel({ email }: { email: string }) {
   const [cartoes, setCartoes] = useState<CartaoPainel[] | null>(null)
+  const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
-    api.painel().then(setCartoes).catch(e => setErro((e as Error).message))
+    Promise.all([api.painel(), api.perfil()])
+      .then(([c, p]) => { setCartoes(c); setPerfil(p) })
+      .catch(e => setErro((e as Error).message))
   }, [])
 
   if (erro) return <p className="erro" role="alert">{erro}</p>
-  if (!cartoes) return <p>A carregar…</p>
+  if (!cartoes || !perfil) return <Esqueleto />
 
-  if (cartoes.length === 0)
-    return <p>Não tens secções ativas. <a href="#/preferencias">Escolhe-as nas preferências.</a></p>
+  const preenchidos = camposPerfil.filter(c => perfil[c] !== null && perfil[c] !== '').length
+  const percentagem = Math.round((preenchidos / camposPerfil.length) * 100)
 
   return (
     <>
-      <h1>Painel</h1>
+      <section className="heroi">
+        <div>
+          <p className="suave">{saudacao()},</p>
+          <h1>{email.split('@')[0]}</h1>
+          <p className="suave">O que a plataforma sabe sobre ti e o que podes fazer hoje.</p>
+        </div>
+        <a href="#/perfil" className="progresso-perfil">
+          <div className="progresso-topo">
+            <span>Perfil</span>
+            <strong>{percentagem}%</strong>
+          </div>
+          <div className="barra" role="progressbar" aria-valuenow={percentagem} aria-valuemin={0} aria-valuemax={100} aria-label="Perfil preenchido">
+            <div style={{ width: `${percentagem}%` }} />
+          </div>
+          <span className="pequeno suave">
+            {percentagem < 100 ? 'Completa o perfil para resultados mais certos →' : 'Perfil completo ✓'}
+          </span>
+        </a>
+      </section>
+
+      {cartoes.length === 0 && (
+        <p>Não tens secções ativas. <a href="#/preferencias">Escolhe-as nas preferências.</a></p>
+      )}
+
       <div className="grelha">
-        {cartoes.map(c => (
-          <section key={c.moduloId} className="cartao">
-            <h2>{c.titulo}</h2>
-            <p>{c.resumo}</p>
-            {c.itens.length > 0 && (
-              <ul className="itens">
-                {c.itens.map((i, n) => (
-                  <li key={n}>
-                    {i.link ? <a href={i.link} target="_blank" rel="noreferrer">{i.texto}</a> : i.texto}
-                    {i.detalhe && <span className="suave pequeno"> {i.detalhe}</span>}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {c.camposPerfilEmFalta.length > 0 && (
-              <p className="aviso pequeno">
-                Falta: {c.camposPerfilEmFalta.map(f => nomesCampos[f] ?? f).join(', ')}. <a href="#/perfil">Completar perfil</a>
-              </p>
-            )}
-          </section>
-        ))}
+        {cartoes.map(c => {
+          const a = aparencia[c.moduloId] ?? { icone: 'inicio' as NomeIcone, cor: 'azul', acao: 'Abrir' }
+          return (
+            <section key={c.moduloId} className={`cartao seccao seccao-${a.cor}`}>
+              <header className="seccao-topo">
+                <span className="seccao-icone"><Icone nome={a.icone} tamanho={22} /></span>
+                <div>
+                  <h2>{c.titulo}</h2>
+                  <p className="suave pequeno">{c.resumo}</p>
+                </div>
+              </header>
+
+              {c.indicadores.length > 0 && (
+                <div className="indicadores">
+                  {c.indicadores.map((i, n) => (
+                    <div key={n} className={`indicador tom-${i.tom}`}>
+                      <strong>{i.valor}</strong>
+                      <span>{i.rotulo}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {c.itens.length > 0 && (
+                <ul className="itens">
+                  {c.itens.map((i, n) => (
+                    <li key={n}>
+                      <span>{i.texto}</span>
+                      {i.detalhe && <span className="suave pequeno">{i.detalhe}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {c.camposPerfilEmFalta.length > 0 && (
+                <p className="aviso pequeno">
+                  Falta no perfil: {c.camposPerfilEmFalta.map(f => nomesCampos[f] ?? f).join(', ')}.
+                </p>
+              )}
+
+              <a className="botao seccao-acao" href={`#/${c.moduloId}`}>
+                {a.acao} <Icone nome="seta" tamanho={16} />
+              </a>
+            </section>
+          )
+        })}
       </div>
     </>
+  )
+}
+
+function Esqueleto() {
+  return (
+    <div className="grelha" aria-busy="true">
+      <div className="cartao esqueleto" />
+      <div className="cartao esqueleto" />
+    </div>
   )
 }

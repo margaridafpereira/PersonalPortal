@@ -43,7 +43,12 @@ BaseDeDados__Fornecedor=Postgres
 ConnectionStrings__Portal="Host=...;Database=...;Username=...;Password=...;SSL Mode=Require"
 ```
 
-Na fase 1 o esquema é criado com `EnsureCreated`. As migrações EF entram quando o esquema estabilizar.
+O esquema é gerido por migrações EF (em `src/Portal.Api/Migrations`, para SQLite), aplicadas no arranque. Depois de mudar o modelo:
+```bash
+dotnet build -m:1 -nodeReuse:false
+dotnet ef migrations add <Nome> --project src/Portal.Api --no-build -o Migrations
+```
+Quando o PostgreSQL entrar, precisa do seu próprio conjunto de migrações (os tipos de coluna diferem).
 
 ## Como acrescentar uma secção
 

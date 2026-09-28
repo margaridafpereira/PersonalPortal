@@ -8,7 +8,7 @@ Atualizado a 28/09/2026.
 |---|---|---|
 | D1 | Um portal com perfil partilhado e duas áreas | As áreas ligam-se: idade e rendimento → IMT Jovem e garantia pública nos imóveis |
 | D2 | Não fazer scraping aos portais imobiliários | Termos de uso, direito das bases de dados (C-762/19) e RGPD; ver [casas/02-questoes-legais.md](casas/02-questoes-legais.md) |
-| D3 | Regras dos apoios escritas à mão na versão 1 | Não há API oficial de elegibilidade |
+| D3 | Regras dos apoios escritas à mão, em C# (`MotorApoios`), com testes | Não há API oficial de elegibilidade; em código são verificadas pelo compilador e pelos testes. Uma DSL em JSON só se justifica se alguém sem programar tiver de as manter |
 | D4 | Mercado imobiliário a partir da API do INE | Testada: gratuita e com dados por freguesia |
 | D5 | Plataforma modular: conta, perfil, preferências e secções ativáveis | Permite acrescentar secções sem mexer nas existentes |
 | D6 | Anúncios em 4 níveis: links de pesquisa, anúncios guardados, alertas de email, API oficial | Ver [casas/03-como-ver-anuncios.md](casas/03-como-ver-anuncios.md) |
@@ -64,16 +64,19 @@ Conclusão: sem scraping deixa de haver a carga concorrente pesada em que o Go b
 - [ ] Repositório no GitHub pessoal, CI (GitHub Actions), Dockerfile
 - [ ] PostgreSQL alojado (Neon ou Supabase) e migrações EF
 
-**Fase 2: radar de apoios, V1 (2 a 3 semanas)**
-- Motor de regras com os 7 apoios do catálogo e testes por perfis-tipo
-- Página "os teus apoios", com o motivo de cada um
-- Prazos 2026 e exportação `.ics`
+**Fase 2: radar de apoios, V1** ✅
+- [x] Motor de regras com os 7 apoios do catálogo, condição a condição, e testes por perfis-tipo
+- [x] Página de apoios agrupada por estado (provável, falta informação, não elegível, encerrado)
+- [x] Prazos pessoais nos próximos 12 meses (IRS, e-Fatura, IMI, IUC, Segurança Social, fim do IMT Jovem) e exportação `.ics`
+- [ ] Feriados nacionais no cálculo do dia útil
 
-**Fase 3: radar de casas, V1 (2 a 3 semanas)**
-- Pesquisas guardadas com links para cada portal (casas e terrenos)
-- Import trimestral do INE e mapa das freguesias (CAOP)
-- Imóveis seguidos, com introdução manual, histórico e comparação com a mediana da freguesia
-- Custo real da compra, ligado ao perfil (IMT Jovem, garantia)
+**Fase 3: radar de anúncios, V1** 🟡
+- [x] Pesquisas guardadas com links para 5 portais (casas e terrenos, comprar e arrendar)
+- [x] Imóveis seguidos: histórico de preços, variação, €/m² e comparação com a mediana do INE **por concelho** (em tempo real, com cache de 12 h)
+- [x] Etiquetas IMT Jovem e garantia pública, a partir do perfil
+- [ ] Validar no browser os URLs do Idealista, Casa Yes, Casa Sapo e Supercasa
+- [ ] Mediana por freguesia e mapa (CAOP)
+- [ ] Custo total da compra: valor do IMT e do Imposto do Selo, prestação do crédito
 
 **Fase 4: evolução**
 - Alertas de email como fonte de anúncios

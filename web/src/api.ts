@@ -43,8 +43,115 @@ export interface CartaoPainel {
   moduloId: string
   titulo: string
   resumo: string
-  itens: { texto: string; detalhe?: string; link?: string }[]
+  itens: { texto: string; detalhe?: string | null; link?: string | null }[]
   camposPerfilEmFalta: string[]
+  indicadores: { valor: string; rotulo: string; tom: 'positivo' | 'aviso' | 'neutro' }[]
+}
+
+// ---- Apoios ----
+
+export type EstadoElegibilidade = 'Provavel' | 'FaltaInformacao' | 'NaoElegivel' | 'Encerrado'
+
+export interface ResultadoApoio {
+  apoio: {
+    id: string
+    nome: string
+    descricao: string
+    categoria: string
+    comoPedir: string
+    fonteOficial: string
+    verificadoEm: string
+    prazo: string | null
+    aviso: string | null
+  }
+  estado: EstadoElegibilidade
+  condicoes: { descricao: string; resultado: 'Cumpre' | 'NaoCumpre' | 'Desconhecido' }[]
+  estimativa: string | null
+}
+
+export interface Prazo {
+  data: string
+  titulo: string
+  descricao: string
+  categoria: 'Impostos' | 'SegurancaSocial' | 'Apoios'
+  link: string | null
+  porConfirmar: boolean
+  diasEmFalta: number
+}
+
+// ---- Anúncios ----
+
+export type Negocio = 'Comprar' | 'Arrendar'
+export type TipoImovel = 'Apartamento' | 'Moradia' | 'Terreno'
+export type EstadoFavorito = 'Ativo' | 'Visitado' | 'Descartado' | 'SaiuDoPortal'
+
+export interface Pesquisa {
+  id: string
+  nome: string
+  negocio: Negocio
+  tipo: TipoImovel
+  distrito: string
+  concelho: string
+  precoMaximo: number | null
+  quartosMinimo: number | null
+}
+
+export interface PesquisaComLinks {
+  pesquisa: Pesquisa
+  links: { portal: string; url: string; verificado: boolean }[]
+}
+
+export interface NovaPesquisa {
+  nome: string | null
+  negocio: Negocio
+  tipo: TipoImovel
+  distrito: string
+  concelho: string
+  precoMaximo: number | null
+  quartosMinimo: number | null
+}
+
+export interface Mediana {
+  concelho: string
+  periodo: string
+  total: number | null
+  novos: number | null
+  existentes: number | null
+}
+
+export interface Favorito {
+  id: string
+  url: string
+  portal: string
+  titulo: string
+  tipo: TipoImovel
+  tipologia: string | null
+  areaM2: number | null
+  concelho: string | null
+  estado: EstadoFavorito
+  notas: string | null
+  criadoEm: string
+  diasASeguir: number
+  precoAtual: number | null
+  precoInicial: number | null
+  variacaoPercent: number | null
+  eurM2: number | null
+  mediana: Mediana | null
+  diferencaMedianaPercent: number | null
+  precos: { data: string; preco: number }[]
+  eventos: { data: string; de: number; para: number; variacaoPercent: number }[]
+  etiquetas: string[]
+}
+
+export interface NovoFavorito {
+  url: string
+  titulo: string | null
+  tipo: TipoImovel
+  tipologia: string | null
+  areaM2: number | null
+  concelho: string | null
+  preco: number | null
+  notas: string | null
 }
 
 export class NaoAutenticado extends Error {}
@@ -84,6 +191,37 @@ export const api = {
   guardarPerfil: (p: Perfil) => pedido<Perfil>('PUT', '/api/perfil', p),
   preferencias: () => pedido<Preferencias>('GET', '/api/preferencias'),
   guardarPreferencias: (p: Preferencias) => pedido<Preferencias>('PUT', '/api/preferencias', p),
+
+  apoios: () => pedido<ResultadoApoio[]>('GET', '/api/apoios'),
+  prazos: () => pedido<Prazo[]>('GET', '/api/apoios/prazos'),
+
+  pesquisas: () => pedido<PesquisaComLinks[]>('GET', '/api/anuncios/pesquisas'),
+  criarPesquisa: (p: NovaPesquisa) => pedido<PesquisaComLinks>('POST', '/api/anuncios/pesquisas', p),
+  apagarPesquisa: (id: string) => pedido<void>('DELETE', `/api/anuncios/pesquisas/${id}`),
+  favoritos: () => pedido<Favorito[]>('GET', '/api/anuncios/favoritos'),
+  criarFavorito: (f: NovoFavorito) => pedido<Favorito>('POST', '/api/anuncios/favoritos', f),
+  alterarFavorito: (f: Favorito) => pedido<Favorito>('PUT', `/api/anuncios/favoritos/${f.id}`,
+    { titulo: f.titulo, tipologia: f.tipologia, areaM2: f.areaM2, concelho: f.concelho, estado: f.estado, notas: f.notas }),
+  registarPreco: (id: string, preco: number) => pedido<Favorito>('POST', `/api/anuncios/favoritos/${id}/precos`, { preco }),
+  apagarFavorito: (id: string) => pedido<void>('DELETE', `/api/anuncios/favoritos/${id}`),
+}
+
+export const distritos = [
+  'Aveiro', 'Beja', 'Braga', 'Bragança', 'Castelo Branco', 'Coimbra', 'Évora', 'Faro', 'Guarda', 'Leiria',
+  'Lisboa', 'Portalegre', 'Porto', 'Santarém', 'Setúbal', 'Viana do Castelo', 'Vila Real', 'Viseu', 'Açores', 'Madeira',
+]
+
+const eur = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+const num = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 })
+export const euros = (v: number) => eur.format(v)
+export const inteiro = (v: number) => num.format(v)
+export const dataCurta = (iso: string) =>
+  new Date(iso + 'T00:00:00').toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })
+
+/** "S5A20261" → "1.º trim. 2026" */
+export const periodoIne = (codigo: string) => {
+  const m = /^S5A(\d{4})(\d)$/.exec(codigo)
+  return m ? `${m[2]}.º trim. ${m[1]}` : codigo
 }
 
 /** Nomes legíveis dos campos do perfil, para o painel dizer o que falta preencher. */
