@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.20" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.20" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Portal.Core\Portal.Core.csproj" />
+    <ProjectReference Include="..\Modules\Portal.Modules.Perfil\Portal.Modules.Perfil.csproj" />
+    <ProjectReference Include="..\Modules\Portal.Modules.Apoios\Portal.Modules.Apoios.csproj" />
+    <ProjectReference Include="..\Modules\Portal.Modules.Anuncios\Portal.Modules.Anuncios.csproj" />
+  </ItemGroup>
+
+</Project>
