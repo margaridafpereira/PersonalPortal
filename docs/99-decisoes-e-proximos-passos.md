@@ -60,7 +60,7 @@ Conclusão: sem scraping deixa de haver a carga concorrente pesada em que o Go b
 - [x] Contrato de módulo e painel inicial com cartões
 - [x] Ficheiro de indexantes 2026
 - [x] Frontend: entrar/registar, painel, perfil, preferências
-- [ ] Correr o frontend num computador pessoal (o proxy da empresa bloqueia o Vite)
+- [x] Frontend a correr neste computador (Vite 5 com binários da cache do npm)
 - [ ] Repositório no GitHub pessoal, CI (GitHub Actions), Dockerfile
 - [ ] PostgreSQL alojado (Neon ou Supabase) e migrações EF
 
