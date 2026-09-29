@@ -223,6 +223,17 @@ public static class AvisosEndpoints
             };
         });
 
+        // Chamado por uma tarefa agendada (GitHub Actions) todos os dias: num plano gratuito que adormece, o serviço
+        // em segundo plano não corre sozinho às 8h. Só funciona com a chave certa; sem chave configurada, não existe.
+        rotas.MapPost("/api/avisos/executar", async (HttpContext ctx, IConfiguration config, ServicoAvisos avisos, TimeProvider relogio, CancellationToken ct) =>
+        {
+            if (config["Email:ChaveExecucao"] is not { Length: >= 20 } chave
+                || !System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+                    System.Text.Encoding.UTF8.GetBytes(ctx.Request.Headers["X-Chave-Avisos"].ToString()), System.Text.Encoding.UTF8.GetBytes(chave)))
+                return Results.NotFound();
+            return Results.Ok(new { Enviados = await avisos.ExecutarAsync(relogio.GetUtcNow(), ct) });
+        }).AllowAnonymous();
+
         grupo.MapPost("/teste", async (ClaimsPrincipal user, ServicoAvisos avisos, IEnviadorEmail email, TimeProvider relogio, CancellationToken ct) =>
         {
             var id = user.FindFirstValue(ClaimTypes.NameIdentifier)!;

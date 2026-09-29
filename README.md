@@ -18,7 +18,7 @@ Estado: **fase 1 (fundações)**: backend com contas, perfil, preferências e pa
 ```bash
 dotnet run --project src/Portal.Api --launch-profile http   # API
 cd web && npm install && npm run dev                        # frontend
-dotnet test                                                 # 161 testes
+dotnet test                                                 # 164 testes
 ```
 
 | Documento | Conteúdo |
@@ -33,6 +33,7 @@ dotnet test                                                 # 161 testes
 | [docs/carro/01-fontes-e-regras.md](docs/carro/01-fontes-e-regras.md) | API da DGEG, regras da inspeção e do IUC |
 | [docs/investimentos/01-fontes-e-regras.md](docs/investimentos/01-fontes-e-regras.md) | Regras fiscais, Anexo J, câmbios do BdP, importação |
 | [docs/investimentos/02-formatos-corretoras.md](docs/investimentos/02-formatos-corretoras.md) | Ficheiros de cada corretora, de onde vem cada formato e limitações |
+| [docs/publicar-na-azure.md](docs/publicar-na-azure.md) | Publicar o portal na Azure (plano gratuito): configuração, GitHub, avisos diários |
 | [docs/avisos.md](docs/avisos.md) | Avisos de prazos por email: como funcionam e como ligar um servidor de email |
 | [docs/exemplos-corretoras/](docs/exemplos-corretoras/) | Ficheiros de exemplo de cada corretora, para experimentar a importação |
 | [docs/assistente.md](docs/assistente.md) | Assistente de IA: ferramentas, fornecedor, nota sobre os dados |

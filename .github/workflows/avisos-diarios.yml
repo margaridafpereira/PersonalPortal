@@ -1,0 +1,23 @@
+# Avisos de prazos por email, todos os dias.
+# No plano gratuito da Azure (F1) a aplicação adormece quando ninguém a usa, e o serviço em segundo plano
+# não corre sozinho às 8h. Esta tarefa acorda o portal e pede-lhe para enviar os avisos do dia.
+# Precisa de: variável PORTAL_URL e segredo AVISOS_CHAVE no repositório (ver docs/publicar-na-azure.md).
+name: Avisos diários
+
+on:
+  schedule:
+    # 7h UTC = 8h em Lisboa no verão, 7h no inverno (o cron do GitHub é sempre em UTC).
+    - cron: "0 7 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  avisos:
+    runs-on: ubuntu-latest
+    if: ${{ vars.PORTAL_URL != '' }}
+    steps:
+      - name: Enviar os avisos do dia
+        run: |
+          # O primeiro pedido pode demorar enquanto a aplicação acorda: até 3 tentativas, 2 minutos cada.
+          curl --fail-with-body --silent --show-error --retry 3 --retry-delay 20 --retry-all-errors --max-time 120 \
+            -X POST -H "X-Chave-Avisos: ${{ secrets.AVISOS_CHAVE }}" \
+            "${{ vars.PORTAL_URL }}/api/avisos/executar"

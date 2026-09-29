@@ -18,6 +18,7 @@ builder.Services.AddBaseDeDados(builder.Configuration);
 builder.Services.AddModulos(builder.Configuration);
 builder.Services.AddAssistente(builder.Configuration);
 builder.Services.AddAvisos(builder.Configuration);
+builder.Services.AddProducao(builder.Configuration);
 
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<Utilizador>(o =>
@@ -40,8 +41,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
+Producao.CriarPastaDaBaseDeDados(app.Configuration);
 await app.PrepararBaseDeDadosAsync();
 
+app.UseProducao();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -57,6 +60,7 @@ app.MapPainel();
 app.MapModulos();
 app.MapAssistente();
 app.MapAvisos();
+app.MapFrontend();
 
 app.Run();
 
