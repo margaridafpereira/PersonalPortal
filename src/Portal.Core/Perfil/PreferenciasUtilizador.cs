@@ -8,6 +8,12 @@ public class PreferenciasUtilizador
     /// <summary>Ids dos módulos ativos, pela ordem em que aparecem no painel.</summary>
     public List<string> SeccoesAtivas { get; set; } = [];
 
+    /// <summary>
+    /// Secções que a pessoa já conhece. Uma secção nova da plataforma aparece ativa uma vez;
+    /// se a pessoa a ocultar, fica oculta.
+    /// </summary>
+    public List<string> SeccoesVistas { get; set; } = [];
+
     public List<string> ZonasInteresse { get; set; } = [];
 
     public bool AlertasEmail { get; set; } = true;
@@ -17,4 +23,7 @@ public class PreferenciasUtilizador
     public List<int> DiasAntecedencia { get; set; } = [14, 3];
 
     public DateTimeOffset AtualizadoEm { get; set; }
+
+    /// <summary>Quando a pessoa aceitou a nota sobre os dados enviados ao fornecedor de IA. Sem isto, o assistente não responde.</summary>
+    public DateTimeOffset? AssistenteAceiteEm { get; set; }
 }

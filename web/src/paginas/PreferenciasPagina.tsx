@@ -1,14 +1,31 @@
 import { useEffect, useState } from 'react'
-import { api, type Modulo, type Preferencias } from '../api'
+import { api, dataCurta, type EstadoAvisos, type Modulo, type Preferencias } from '../api'
+import { Explicacao } from '../componentes/Explicacao'
 
 export function PreferenciasPagina() {
   const [modulos, setModulos] = useState<Modulo[] | null>(null)
   const [prefs, setPrefs] = useState<Preferencias | null>(null)
   const [estado, setEstado] = useState<string | null>(null)
+  const [avisos, setAvisos] = useState<EstadoAvisos | null>(null)
+  const [teste, setTeste] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([api.modulos(), api.preferencias()]).then(([m, p]) => { setModulos(m); setPrefs(p) })
   }, [])
+
+  // Recarrega quando mudam as secções ou os dias: os próximos avisos dependem de ambos.
+  useEffect(() => {
+    api.avisos().then(setAvisos, () => setAvisos(null))
+  }, [prefs?.seccoesAtivas, prefs?.diasAntecedencia, prefs?.alertasEmail])
+
+  const enviarTeste = async () => {
+    setTeste('A enviar…')
+    try {
+      setTeste((await api.emailTeste()).mensagem)
+    } catch (err) {
+      setTeste((err as Error).message)
+    }
+  }
 
   if (!modulos || !prefs) return <p>A carregar…</p>
 
@@ -41,8 +58,8 @@ export function PreferenciasPagina() {
   }
 
   return (
-    <div className="formulario">
-      <h1>Preferências</h1>
+    <>
+      <h2 className="titulo-seccao">Preferências</h2>
 
       <fieldset className="cartao">
         <legend>Secções do painel</legend>
@@ -78,7 +95,7 @@ export function PreferenciasPagina() {
         <legend>Alertas</legend>
         <label className="linha">
           <input type="checkbox" checked={prefs.alertasEmail} onChange={e => guardar({ ...prefs, alertasEmail: e.target.checked })} />
-          Por email
+          Por email{avisos?.email && <span className="suave pequeno">({avisos.email})</span>}
         </label>
         <label className="linha">
           <input type="checkbox" checked={prefs.alertasTelegram} onChange={e => guardar({ ...prefs, alertasTelegram: e.target.checked })} />
@@ -93,9 +110,39 @@ export function PreferenciasPagina() {
             </label>
           ))}
         </div>
+
+        {avisos && (
+          <>
+            <p className="pequeno">
+              Um email por dia, a partir das {avisos.horaEnvio}h, só quando há prazos a chegar. Cada aviso vai uma vez para cada antecedência escolhida.
+              {' '}<span className="suave">Os emails são {avisos.destino}.</span>
+            </p>
+            <div className="acoes">
+              <button type="button" onClick={enviarTeste}>Enviar email de teste</button>
+              {teste && <span className="pequeno" role="status">{teste}</span>}
+            </div>
+            {avisos.proximos.length > 0 ? (
+              <>
+                <p className="pequeno"><strong>Prazos dentro da antecedência escolhida:</strong></p>
+                <ul className="pequeno">
+                  {avisos.proximos.map(p => (
+                    <li key={p.titulo + p.data}>{p.titulo} — {dataCurta(p.data)} ({p.diasEmFalta === 0 ? 'hoje' : `daqui a ${p.diasEmFalta} dias`}) <span className="suave">· {p.seccao}</span></li>
+                  ))}
+                </ul>
+              </>
+            ) : <p className="suave pequeno">Nenhum prazo dentro da antecedência escolhida.</p>}
+            <Explicacao titulo="Como ligar um servidor de email a sério?">
+              <p>
+                Sem servidor de email configurado, os avisos ficam gravados como ficheiros .eml na pasta da API (abrem-se no Outlook): serve para testar.
+                Para receberes os emails na tua caixa, configura "Email" no appsettings.json com Modo "Smtp" e os dados do servidor
+                (por exemplo o Gmail, com uma palavra-passe de aplicação). Vê docs/avisos.md.
+              </p>
+            </Explicacao>
+          </>
+        )}
       </fieldset>
 
       {estado && <p role="status">{estado}</p>}
-    </div>
+    </>
   )
 }

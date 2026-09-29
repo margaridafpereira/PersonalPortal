@@ -20,6 +20,11 @@ const caminhos = {
   errado: 'M6 6l12 12M18 6 6 18',
   duvida: 'M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 18h0',
   sair: 'M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h10',
+  carro: 'M5 16h14M5 16v2h2v-2M17 16v2h2v-2M4 16v-4l2-5h12l2 5v4M4 12h16M7.5 14h0M16.5 14h0',
+  grafico: 'M4 20h16M6 16l4-5 3 3 5-7M14 7h4v4',
+  lapis: 'M4 20h4L19 9l-4-4L4 16v4Zm9-13 4 4',
+  conversa: 'M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-5 4V6Zm4 4h0m4 0h0m4 0h0',
+  enviar: 'M4 12 20 4l-6 16-2.5-6.5L4 12Zm7.5 1.5L20 4',
 } as const
 
 export type NomeIcone = keyof typeof caminhos

@@ -1,25 +1,29 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, NaoAutenticado } from './api'
+import { Assistente } from './componentes/Assistente'
 import { Icone, type NomeIcone } from './componentes/Icone'
 import { AnunciosPagina } from './paginas/AnunciosPagina'
 import { ApoiosPagina } from './paginas/ApoiosPagina'
+import { CarroPagina } from './paginas/CarroPagina'
+import { InvestimentosPagina } from './paginas/InvestimentosPagina'
 import { Entrar } from './paginas/Entrar'
 import { Painel } from './paginas/Painel'
 import { PerfilPagina } from './paginas/PerfilPagina'
-import { PreferenciasPagina } from './paginas/PreferenciasPagina'
 
-type Pagina = 'painel' | 'apoios' | 'anuncios' | 'perfil' | 'preferencias'
+type Pagina = 'painel' | 'apoios' | 'anuncios' | 'carro' | 'investimentos' | 'perfil'
 
 const paginas: { id: Pagina; nome: string; icone: NomeIcone; seccao?: boolean }[] = [
   { id: 'painel', nome: 'Início', icone: 'inicio' },
   { id: 'apoios', nome: 'Apoios e prazos', icone: 'escudo', seccao: true },
   { id: 'anuncios', nome: 'Anúncios', icone: 'casa', seccao: true },
+  { id: 'carro', nome: 'Carro', icone: 'carro', seccao: true },
+  { id: 'investimentos', nome: 'Investimentos', icone: 'grafico', seccao: true },
   { id: 'perfil', nome: 'Perfil', icone: 'pessoa' },
-  { id: 'preferencias', nome: 'Preferências', icone: 'ajustes' },
 ]
 
 function paginaDoEndereco(): Pagina {
-  const hash = window.location.hash.replace('#/', '')
+  // As preferências passaram para a página do perfil; links antigos continuam a funcionar.
+  const hash = window.location.hash.replace('#/', '').replace('preferencias', 'perfil')
   return paginas.some(p => p.id === hash) ? (hash as Pagina) : 'painel'
 }
 
@@ -69,7 +73,7 @@ export default function App() {
           ))}
         </nav>
         <div className="utilizador">
-          <span className="avatar" title={email}>{email[0].toUpperCase()}</span>
+          <a href="#/perfil" className="avatar" title={`${email} · editar perfil`}>{email[0].toUpperCase()}</a>
           <button className="icone-botao" onClick={sair} title="Sair" aria-label="Sair">
             <Icone nome="sair" tamanho={18} />
           </button>
@@ -79,9 +83,11 @@ export default function App() {
         {pagina === 'painel' && <Painel email={email} />}
         {pagina === 'apoios' && <ApoiosPagina />}
         {pagina === 'anuncios' && <AnunciosPagina />}
-        {pagina === 'perfil' && <PerfilPagina />}
-        {pagina === 'preferencias' && <PreferenciasPagina />}
+        {pagina === 'carro' && <CarroPagina />}
+        {pagina === 'investimentos' && <InvestimentosPagina />}
+        {pagina === 'perfil' && <PerfilPagina email={email} />}
       </main>
+      <Assistente seccao={pagina} />
     </div>
   )
 }

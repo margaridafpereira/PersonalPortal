@@ -1,0 +1,8 @@
+data,tipo,isin,nome,quantidade,preco,moeda,comissoes_eur,retencao,moeda_retencao
+2024-03-15,compra,US0378331005,Apple,10,172.50,USD,1.00,,
+2024-06-03,compra,IE00BK5BQT80,Vanguard FTSE All-World UCITS ETF Acc,20,115.00,EUR,2.00,,
+2025-02-10,compra,US0378331005,Apple,5,230.00,USD,1.00,,
+2025-05-15,dividendo,US0378331005,Apple,15,0.25,USD,,1.13,USD
+2025-06-02,venda,US0378331005,Apple,12,201.30,USD,1.00,,
+2025-08-14,dividendo,US0378331005,Apple,3,0.26,USD,,0.12,USD
+2025-09-15,venda,IE00BK5BQT80,Vanguard FTSE All-World UCITS ETF Acc,20,128.40,EUR,2.00,,

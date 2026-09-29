@@ -10,6 +10,9 @@ public class PerfilUtilizador
 {
     public string UtilizadorId { get; set; } = "";
 
+    /// <summary>Como a pessoa quer ser tratada no portal.</summary>
+    public string? Nome { get; set; }
+
     public DateOnly? DataNascimento { get; set; }
     public string? Concelho { get; set; }
     public string? Freguesia { get; set; }
@@ -28,8 +31,9 @@ public class PerfilUtilizador
     public bool? ProcuraComprarCasa { get; set; }
     public decimal? OrcamentoCompra { get; set; }
 
-    public bool? TemVeiculo { get; set; }
-    public int? MesMatricula { get; set; }
+    /// <summary>Validade da carta de condução (campo 4b), para o aviso de revalidação.</summary>
+    public DateOnly? ValidadeCartaConducao { get; set; }
+
     public bool? ProprietarioImovel { get; set; }
     public decimal? ValorImi { get; set; }
 

@@ -25,6 +25,9 @@
     <ProjectReference Include="..\..\src\Modules\Portal.Modules.Perfil\Portal.Modules.Perfil.csproj" />
     <ProjectReference Include="..\..\src\Modules\Portal.Modules.Apoios\Portal.Modules.Apoios.csproj" />
     <ProjectReference Include="..\..\src\Modules\Portal.Modules.Anuncios\Portal.Modules.Anuncios.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Portal.Modules.Carro\Portal.Modules.Carro.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Portal.Modules.Investimentos\Portal.Modules.Investimentos.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Portal.Modules.Assistente\Portal.Modules.Assistente.csproj" />
   </ItemGroup>
 
 </Project>

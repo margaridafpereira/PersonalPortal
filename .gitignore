@@ -9,3 +9,6 @@ dist/
 .vscode/
 *.user
 appsettings.*.local.json
+
+# Emails gravados pelo modo de teste dos avisos
+src/Portal.Api/emails-enviados/

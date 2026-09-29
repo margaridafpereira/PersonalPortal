@@ -1,3 +1,4 @@
+using Portal.Core.Prazos;
 using Portal.Core.Perfil;
 using Portal.Modules.Apoios;
 using Portal.Modules.Apoios.Prazos;
@@ -164,27 +165,38 @@ public class PrazosTests
     }
 
     [Fact]
-    public void Iuc_no_mes_da_matricula()
-    {
-        var p = new PerfilUtilizador { TemVeiculo = true, MesMatricula = 3, CategoriaRendimento = CategoriaRendimento.Nenhum };
-
-        var iuc = Assert.Single(CalendarioPrazos.Proximos(p, Hoje));
-
-        Assert.Equal(new DateOnly(2027, 3, 31), iuc.Data);
-    }
-
-    [Fact]
     public void Ics_tem_um_evento_por_prazo_com_alarmes()
     {
         var p = new PerfilUtilizador { CategoriaRendimento = CategoriaRendimento.TrabalhoIndependente };
         var prazos = CalendarioPrazos.Proximos(p, Hoje);
 
-        var ics = CalendarioPrazos.ParaIcs(prazos, [14, 3], DateTimeOffset.UnixEpoch);
+        var ics = Calendario.ParaIcs(prazos.Select(p => p.ParaEvento()), [14, 3], DateTimeOffset.UnixEpoch);
 
         Assert.StartsWith("BEGIN:VCALENDAR", ics);
         Assert.Equal(prazos.Count, CountOf(ics, "BEGIN:VEVENT"));
         Assert.Equal(prazos.Count * 2, CountOf(ics, "BEGIN:VALARM"));
         Assert.Contains("TRIGGER:-P14D", ics);
+    }
+
+    [Fact]
+    public void Ics_dobra_linhas_longas_sem_partir_acentos()
+    {
+        var descricao = string.Concat(Enumerable.Repeat("Declaração à Segurança Social. ", 10));
+
+        var ics = Calendario.ParaIcs([new EventoCalendario(new DateOnly(2026, 10, 31), "Prazo", descricao, null)], [], DateTimeOffset.UnixEpoch);
+
+        var linhas = ics.Split("\r\n");
+        Assert.All(linhas, l => Assert.True(System.Text.Encoding.UTF8.GetByteCount(l) <= 75, l));
+        // Juntar as continuações devolve o texto original.
+        Assert.Contains("DESCRIPTION:" + descricao.TrimEnd(), ics.Replace("\r\n ", ""));
+    }
+
+    [Fact]
+    public void Ics_escapa_quebras_de_linha_windows()
+    {
+        var ics = Calendario.ParaIcs([new EventoCalendario(new DateOnly(2026, 10, 31), "Prazo", "a\r\nb", null)], [], DateTimeOffset.UnixEpoch);
+
+        Assert.Contains("DESCRIPTION:a\\nb\r\n", ics);
     }
 
     private static int CountOf(string texto, string procura) =>

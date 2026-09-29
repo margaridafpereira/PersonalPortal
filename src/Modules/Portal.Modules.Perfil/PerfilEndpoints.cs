@@ -80,16 +80,23 @@ public static class PerfilEndpoints
         return perfil;
     }
 
-    /// <summary>Devolve as preferências; na primeira vez ficam ativas todas as secções.</summary>
+    /// <summary>Devolve as preferências. Secções que a pessoa ainda não viu entram ativas, no fim da lista.</summary>
     public static async Task<PreferenciasUtilizador> ObterPreferenciasAsync(PortalDbContext db, string id, IEnumerable<IModulo> modulos, CancellationToken ct)
     {
         var prefs = await db.Preferencias.FindAsync([id], ct);
-        if (prefs is not null)
-            return prefs;
+        if (prefs is null)
+        {
+            prefs = new PreferenciasUtilizador { UtilizadorId = id };
+            db.Preferencias.Add(prefs);
+        }
 
-        prefs = new PreferenciasUtilizador { UtilizadorId = id, SeccoesAtivas = modulos.Select(m => m.Id).ToList() };
-        db.Preferencias.Add(prefs);
-        await db.SaveChangesAsync(ct);
+        var novas = modulos.Select(m => m.Id).Where(m => !prefs.SeccoesVistas.Contains(m)).ToList();
+        if (novas.Count > 0 || db.Entry(prefs).State == EntityState.Added)
+        {
+            prefs.SeccoesAtivas = [.. prefs.SeccoesAtivas, .. novas.Where(n => !prefs.SeccoesAtivas.Contains(n))];
+            prefs.SeccoesVistas = [.. prefs.SeccoesVistas, .. novas];
+            await db.SaveChangesAsync(ct);
+        }
         return prefs;
     }
 

@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { api, type Perfil } from '../api'
+import { PreferenciasPagina } from './PreferenciasPagina'
 
 const numero = (v: string) => (v === '' ? null : Number(v))
 const simNao = (v: string) => (v === '' ? null : v === 'sim')
 const valorSimNao = (v: boolean | null) => (v === null ? '' : v ? 'sim' : 'nao')
 
-export function PerfilPagina() {
+export function PerfilPagina({ email }: { email: string }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [estado, setEstado] = useState<string | null>(null)
 
@@ -29,11 +30,17 @@ export function PerfilPagina() {
   }
 
   return (
-    <form onSubmit={guardar} className="formulario">
-      <h1>Perfil</h1>
+    <div className="formulario">
+      <h1>Perfil e preferências</h1>
       <p className="suave">Preenches uma vez e todas as secções usam estes dados. Nada é partilhado.</p>
 
+      <Conta email={email} />
+
+    <form onSubmit={guardar}>
       <Grupo titulo="Sobre ti">
+        <label>Nome
+          <input autoComplete="given-name" placeholder="Como te chamamos" value={perfil.nome ?? ''} onChange={e => mudar('nome', e.target.value || null)} />
+        </label>
         <label>Data de nascimento
           <input type="date" value={perfil.dataNascimento ?? ''} onChange={e => mudar('dataNascimento', e.target.value || null)} />
         </label>
@@ -99,25 +106,67 @@ export function PerfilPagina() {
       </Grupo>
 
       <Grupo titulo="Património (para prazos)">
-        <SimNao rotulo="Tens veículo" valor={perfil.temVeiculo} aoMudar={v => mudar('temVeiculo', v)} />
-        {perfil.temVeiculo && (
-          <label>Mês da matrícula
-            <input type="number" min={1} max={12} value={perfil.mesMatricula ?? ''} onChange={e => mudar('mesMatricula', numero(e.target.value))} />
-          </label>
-        )}
         <SimNao rotulo="És proprietário de imóvel" valor={perfil.proprietarioImovel} aoMudar={v => mudar('proprietarioImovel', v)} />
         {perfil.proprietarioImovel && (
           <label>Valor anual do IMI (€)
             <input type="number" min={0} value={perfil.valorImi ?? ''} onChange={e => mudar('valorImi', numero(e.target.value))} />
           </label>
         )}
+        <p className="suave pequeno">Os carros e os respetivos prazos (IUC, inspeção, seguro) estão na secção <a href="#/carro">Carro</a>.</p>
       </Grupo>
 
-      <div className="acoes">
+      <div className="acoes barra-guardar">
         <button type="submit">Guardar perfil</button>
         {estado && <span role="status">{estado}</span>}
       </div>
     </form>
+
+      <PreferenciasPagina />
+    </div>
+  )
+}
+
+function Conta({ email }: { email: string }) {
+  const [atual, setAtual] = useState('')
+  const [nova, setNova] = useState('')
+  const [estado, setEstado] = useState<{ ok: boolean; texto: string } | null>(null)
+
+  const mudarPalavraPasse = async (e: FormEvent) => {
+    e.preventDefault()
+    try {
+      await api.alterarPalavraPasse(atual, nova)
+      setAtual('')
+      setNova('')
+      setEstado({ ok: true, texto: 'Palavra-passe alterada.' })
+    } catch (err) {
+      setEstado({ ok: false, texto: (err as Error).message })
+    }
+  }
+
+  return (
+    <fieldset className="cartao">
+      <legend>Conta</legend>
+      <div className="campos">
+        <label>Email
+          <input value={email} readOnly disabled />
+        </label>
+      </div>
+      <form onSubmit={mudarPalavraPasse}>
+        <p className="pequeno"><strong>Mudar a palavra-passe</strong></p>
+        <div className="campos">
+          <label>Palavra-passe atual
+            <input type="password" autoComplete="current-password" required value={atual} onChange={e => setAtual(e.target.value)} />
+          </label>
+          <label>Nova palavra-passe
+            <input type="password" autoComplete="new-password" required minLength={10} value={nova} onChange={e => setNova(e.target.value)} />
+          </label>
+        </div>
+        <div className="acoes">
+          <button type="submit">Mudar palavra-passe</button>
+          {estado && <span role="status" className={estado.ok ? '' : 'erro'}>{estado.texto}</span>}
+        </div>
+      </form>
+    </fieldset>
   )
 }
 

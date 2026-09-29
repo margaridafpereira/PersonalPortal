@@ -3,6 +3,8 @@ using Portal.Core.Dados;
 using Portal.Core.Modulos;
 using Portal.Modules.Anuncios;
 using Portal.Modules.Apoios;
+using Portal.Modules.Carro;
+using Portal.Modules.Investimentos;
 using Portal.Modules.Perfil;
 
 namespace Portal.Api;
@@ -10,7 +12,7 @@ namespace Portal.Api;
 public static class Modulos
 {
     /// <summary>Todas as secções disponíveis. Uma secção nova entra aqui.</summary>
-    private static readonly IModulo[] Todos = [new ModuloApoios(), new ModuloAnuncios()];
+    private static readonly IModulo[] Todos = [new ModuloApoios(), new ModuloAnuncios(), new ModuloCarro(), new ModuloInvestimentos()];
 
     public static IServiceCollection AddModulos(this IServiceCollection servicos, IConfiguration config)
     {

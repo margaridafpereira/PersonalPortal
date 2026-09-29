@@ -1,0 +1,6 @@
+"Buy/Sell","TradeDate","ISIN","Quantity","TradePrice","TradeMoney","CurrencyPrimary","IBCommission","IBCommissionCurrency"
+"BUY","20230522","CH0111762537","7","282.7","1978.9","CHF","-5","CHF"
+"BUY","20230522","US9220427424","95","93.78","8909.1","USD","-1","USD"
+"BUY","20230609","US9220427424","105","95.42","10019.1","USD","-1","USD"
+"BUY","20230609","US9220427424","11","95.46","1050.06","USD","-1","USD"
+"SELL","20230522","","-8000","1.1173","-8938.4","USD","-1.79924","CHF"

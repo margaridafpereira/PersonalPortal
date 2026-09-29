@@ -327,3 +327,100 @@ button.icone { background: none; color: var(--texto); border: 1px solid var(--bo
 .entrar { width: min(420px, 100%); display: flex; flex-direction: column; gap: 14px; padding: 32px; }
 .entrar h1 { margin: 0; }
 .entrar p { margin: 0; }
+
+/* ---------- Carro e investimentos ---------- */
+
+.seccao-laranja { --cor: #d9480f; --cor-suave: #fff0e6; }
+.seccao-roxo { --cor: #7048e8; --cor-suave: #f3f0ff; }
+@media (prefers-color-scheme: dark) {
+  .seccao-laranja { --cor: #ff9a5c; --cor-suave: #2f1a0c; }
+  .seccao-roxo { --cor: #b197fc; --cor-suave: #221a3a; }
+}
+
+.titulo-seccao { margin: 8px 0 12px; font-size: 1.05rem; }
+.duas-colunas { display: grid; gap: 24px; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+@media (max-width: 900px) { .duas-colunas { grid-template-columns: 1fr; } }
+.duas-colunas .lista { margin-bottom: 24px; }
+.matricula { font-family: ui-monospace, monospace; font-size: 0.8rem; padding: 2px 6px; border: 1px solid var(--borda); border-radius: 5px; margin-left: 6px; background: var(--superficie-2); }
+
+.combustiveis { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 76px; }
+.combustiveis h2 { display: flex; align-items: center; gap: 8px; }
+.postos { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.postos li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.postos li:first-child .posto-preco strong { color: var(--verde); }
+.postos p { margin: 2px 0 0; }
+.posto-preco { display: flex; flex-direction: column; align-items: flex-end; white-space: nowrap; }
+
+.resumo-irs { margin-bottom: 18px; }
+.avisos ul { margin: 0; padding-left: 18px; }
+.tabela-cartao { margin-bottom: 18px; }
+.tabela-cartao h2 { margin-bottom: 12px; }
+.tabela-rolar { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th { text-align: left; font-weight: 600; color: var(--suave); padding: 8px 10px; border-bottom: 1px solid var(--borda); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--borda); white-space: nowrap; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ganho { color: var(--verde); font-weight: 600; }
+.perda { color: var(--vermelho); font-weight: 600; }
+.tipo-Compra { background: var(--azul-suave); color: var(--azul); border-color: transparent; }
+.tipo-Venda { background: var(--ambar-suave); color: var(--ambar); border-color: transparent; }
+.tipo-Dividendo { background: var(--verde-suave); color: var(--verde); border-color: transparent; }
+.escolher-ficheiro { display: inline-flex; flex-direction: row; margin-top: 8px; cursor: pointer; }
+
+.mapeamento { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--borda); }
+.mapeamento h3 { margin: 0 0 8px; }
+.mapeamento .tabela-rolar { max-height: 220px; margin: 6px 0 14px; border: 1px solid var(--borda); border-radius: 10px; }
+.barra-guardar { margin: 4px 0 28px; }
+.avatar:hover { text-decoration: none; filter: brightness(0.95); }
+
+/* Explicações "Porquê?" junto de cada valor: fechadas por omissão, para não encher o ecrã. */
+.explicacao { margin-top: 6px; }
+.explicacao summary { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--acento); font-size: 0.85rem; list-style: none; }
+.explicacao summary::-webkit-details-marker { display: none; }
+.explicacao[open] summary { margin-bottom: 6px; }
+.explicacao > div { color: var(--suave); background: var(--superficie-2); border-radius: 10px; padding: 10px 12px; line-height: 1.5; }
+.explicacao > div p { margin: 0 0 6px; }
+.explicacao > div p:last-child { margin-bottom: 0; }
+.indicador .explicacao summary { font-size: 0.8rem; }
+
+/* Assistente: botão flutuante e painel lateral, em todas as páginas. */
+.assistente-botao {
+  position: fixed; right: 20px; bottom: 20px; z-index: 40;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 18px; border-radius: 999px; box-shadow: var(--sombra);
+}
+.assistente {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+  width: min(420px, 100vw); display: flex; flex-direction: column;
+  background: var(--superficie); border-left: 1px solid var(--borda); box-shadow: var(--sombra);
+}
+.assistente > header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--borda); }
+.assistente > header > div { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.assistente-corpo { padding: 16px; overflow-y: auto; }
+.assistente-corpo code { display: block; margin-top: 4px; padding: 6px 8px; background: var(--superficie-2); border-radius: 8px; font-size: 0.8rem; overflow-wrap: anywhere; }
+.assistente-conversa { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.sugestoes { display: flex; flex-direction: column; gap: 8px; }
+.sugestao { background: var(--acento-suave); color: var(--acento); text-align: left; font-weight: 500; }
+.mensagem { padding: 10px 12px; border-radius: 12px; line-height: 1.5; max-width: 92%; overflow-wrap: anywhere; }
+.mensagem p { margin: 0 0 6px; }
+.mensagem p:last-child { margin-bottom: 0; }
+.mensagem ul { margin: 4px 0 6px; padding-left: 18px; }
+.mensagem-utilizador { align-self: flex-end; background: var(--acento); color: var(--acento-texto); white-space: pre-wrap; }
+.mensagem-assistente { align-self: flex-start; background: var(--superficie-2); }
+.consultas { margin-top: 8px; font-size: 0.78rem; color: var(--suave); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.assistente-pergunta { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--borda); }
+.assistente-pergunta textarea { flex: 1; resize: none; }
+.assistente-pergunta button { align-self: flex-end; }
+@media (max-width: 640px) {
+  .assistente-botao span { display: none; }
+  .assistente-botao { padding: 14px; }
+}
+
+/* Carro: blocos de IUC, seguro e consumo dentro de cada veículo. */
+.veiculo-blocos { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 12px; }
+.veiculo-blocos > div { background: var(--superficie-2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.veiculo-blocos strong { font-size: 1.15rem; }
+.veiculo-blocos p { margin: 0; }
+.abastecimentos { margin-top: 12px; border-top: 1px solid var(--borda); padding-top: 10px; }
+.abastecimentos table { width: 100%; margin-top: 6px; }
+.ligacoes { display: flex; flex-wrap: wrap; gap: 12px; margin: 4px 0 0; }

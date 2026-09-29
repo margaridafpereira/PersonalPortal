@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Portal.Core.Prazos;
 using Portal.Core.Dados;
 using Portal.Core.Modulos;
 using Portal.Core.Perfil;
@@ -32,6 +33,27 @@ public sealed class ModuloApoios : IModulo
     public void RegistarServicos(IServiceCollection servicos, IConfiguration configuracao) =>
         servicos.AddSingleton<IFonteIndexantes, IndexantesEmbebidos>();
 
+    public IReadOnlyList<FerramentaAssistente> FerramentasAssistente { get; } =
+    [
+        new("apoios_elegiveis",
+            "Apoios públicos (IRS Jovem, Porta 65 Jovem, IMT Jovem, garantia pública, abono de família…) avaliados com o perfil da pessoa: "
+            + "estado de elegibilidade, condições cumpridas, falhadas ou por saber, estimativa do valor, como pedir e fonte oficial.",
+            [],
+            (ctx, _, _) => Task.FromResult<object?>(ctx.Servicos.GetRequiredService<IFonteIndexantes>().Obter(ctx.Hoje.Year) is { } ix
+                ? MotorApoios.Avaliar(ctx.Perfil, ix, ctx.Hoje).Select(r => new
+                {
+                    r.Apoio.Nome, r.Apoio.Descricao, r.Estado,
+                    Condicoes = r.Condicoes.Select(c => new { c.Resultado, c.Descricao }),
+                    r.Estimativa, r.Apoio.ComoPedir, r.Apoio.Prazo, r.Apoio.Aviso, r.Apoio.FonteOficial, r.Apoio.VerificadoEm,
+                }).ToList()
+                : new { Erro = $"Ainda não há indexantes para {ctx.Hoje.Year}." })),
+        new("prazos_fiscais",
+            "Próximos prazos fiscais e da Segurança Social que se aplicam à pessoa nos próximos 12 meses (IRS, IMI, declarações trimestrais…), com os dias em falta.",
+            [],
+            (ctx, _, _) => Task.FromResult<object?>(CalendarioPrazos.Proximos(ctx.Perfil, ctx.Hoje)
+                .Select(p => new { p.Data, p.Titulo, p.Descricao, p.Categoria, DiasEmFalta = p.DiasEmFalta(ctx.Hoje), p.PorConfirmar, p.Link }).ToList())),
+    ];
+
     public void MapearEndpoints(IEndpointRouteBuilder rotas)
     {
         rotas.MapGet("/api/apoios/indexantes/{ano:int}", (int ano, IFonteIndexantes fonte) =>
@@ -58,10 +80,15 @@ public sealed class ModuloApoios : IModulo
         {
             var (perfil, hoje) = await CarregarAsync(user, db, relogio, ct);
             var prefs = await db.Preferencias.FindAsync([UtilizadorId(user)], ct);
-            var ics = CalendarioPrazos.ParaIcs(CalendarioPrazos.Proximos(perfil, hoje), prefs?.DiasAntecedencia ?? [14, 3], relogio.GetUtcNow());
+            var ics = Calendario.ParaIcs(CalendarioPrazos.Proximos(perfil, hoje).Select(p => p.ParaEvento()), prefs?.DiasAntecedencia ?? [14, 3], relogio.GetUtcNow());
             return Results.File(Encoding.UTF8.GetBytes(ics), "text/calendar", "prazos.ics");
         });
     }
+
+    public Task<IReadOnlyList<AvisoPrazo>> ObterAvisosAsync(ContextoUtilizador contexto, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<AvisoPrazo>>(CalendarioPrazos.Proximos(contexto.Perfil, contexto.Hoje)
+            .Select(p => new AvisoPrazo($"apoios:{p.Categoria}:{p.Titulo}:{p.Data:yyyy-MM-dd}", p.Data, p.Titulo, p.Descricao, p.Link))
+            .ToList());
 
     public Task<CartaoPainel> ObterCartaoAsync(ContextoUtilizador contexto, CancellationToken ct)
     {

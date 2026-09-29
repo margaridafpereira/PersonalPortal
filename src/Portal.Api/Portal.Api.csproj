@@ -4,6 +4,8 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Segredos locais (ex.: a chave do assistente): dotnet user-secrets set "Assistente:Chave" "..." -->
+    <UserSecretsId>portal-pessoal-api-7c2f1e9a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,9 @@
     <ProjectReference Include="..\Modules\Portal.Modules.Perfil\Portal.Modules.Perfil.csproj" />
     <ProjectReference Include="..\Modules\Portal.Modules.Apoios\Portal.Modules.Apoios.csproj" />
     <ProjectReference Include="..\Modules\Portal.Modules.Anuncios\Portal.Modules.Anuncios.csproj" />
+    <ProjectReference Include="..\Modules\Portal.Modules.Carro\Portal.Modules.Carro.csproj" />
+    <ProjectReference Include="..\Modules\Portal.Modules.Investimentos\Portal.Modules.Investimentos.csproj" />
+    <ProjectReference Include="..\Modules\Portal.Modules.Assistente\Portal.Modules.Assistente.csproj" />
   </ItemGroup>
 
 </Project>

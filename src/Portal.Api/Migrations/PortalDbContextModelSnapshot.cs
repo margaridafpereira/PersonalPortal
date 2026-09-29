@@ -145,6 +145,35 @@ namespace Portal.Api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Portal.Core.Avisos.AvisoEnviado", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Chave")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Dias")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("EnviadoEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilizadorId", "Chave", "Dias")
+                        .IsUnique();
+
+                    b.ToTable("avisos_enviados", (string)null);
+                });
+
             modelBuilder.Entity("Portal.Core.Dados.Utilizador", b =>
                 {
                     b.Property<string>("Id")
@@ -241,8 +270,9 @@ namespace Portal.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("MesMatricula")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Nome")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("NumeroAdultos")
                         .HasColumnType("INTEGER");
@@ -268,8 +298,8 @@ namespace Portal.Api.Migrations
                     b.Property<string>("SituacaoHabitacao")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool?>("TemVeiculo")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateOnly?>("ValidadeCartaConducao")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("ValorImi")
                         .HasColumnType("TEXT");
@@ -290,6 +320,9 @@ namespace Portal.Api.Migrations
                     b.Property<bool>("AlertasTelegram")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTimeOffset?>("AssistenteAceiteEm")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTimeOffset>("AtualizadoEm")
                         .HasColumnType("TEXT");
 
@@ -298,6 +331,10 @@ namespace Portal.Api.Migrations
                         .HasColumnType("TEXT");
 
                     b.PrimitiveCollection<string>("SeccoesAtivas")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.PrimitiveCollection<string>("SeccoesVistas")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -404,6 +441,192 @@ namespace Portal.Api.Migrations
                     b.ToTable("pesquisas", (string)null);
                 });
 
+            modelBuilder.Entity("Portal.Modules.Carro.Abastecimento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Data")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("DepositoCheio")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Litros")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Posto")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quilometros")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("ValorTotal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("VeiculoId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VeiculoId");
+
+                    b.HasIndex("UtilizadorId", "VeiculoId");
+
+                    b.ToTable("abastecimentos", (string)null);
+                });
+
+            modelBuilder.Entity("Portal.Modules.Carro.Veiculo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ApoliceSeguro")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Cilindrada")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Combustivel")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("ConsumoLitros100Km")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("DataPrimeiraMatricula")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EmissoesCo2")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Matricula")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormaCo2")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("ProximaRevisao")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("RenovacaoSeguro")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Seguradora")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("ValorSeguroAnual")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilizadorId");
+
+                    b.ToTable("veiculos", (string)null);
+                });
+
+            modelBuilder.Entity("Portal.Modules.Investimentos.Operacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Ativo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Comissoes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Corretora")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdExterno")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Moeda")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MoedaComissoes")
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MoedaRetencao")
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Momento")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PrecoUnitario")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Quantidade")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("RetencaoFonte")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TipoAtivo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UtilizadorId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilizadorId");
+
+                    b.HasIndex("UtilizadorId", "IdExterno");
+
+                    b.ToTable("operacoes_investimento", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -451,6 +674,15 @@ namespace Portal.Api.Migrations
                     b.HasOne("Portal.Core.Dados.Utilizador", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Portal.Core.Avisos.AvisoEnviado", b =>
+                {
+                    b.HasOne("Portal.Core.Dados.Utilizador", null)
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -510,6 +742,33 @@ namespace Portal.Api.Migrations
                 });
 
             modelBuilder.Entity("Portal.Modules.Anuncios.PesquisaGuardada", b =>
+                {
+                    b.HasOne("Portal.Core.Dados.Utilizador", null)
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Portal.Modules.Carro.Abastecimento", b =>
+                {
+                    b.HasOne("Portal.Modules.Carro.Veiculo", null)
+                        .WithMany()
+                        .HasForeignKey("VeiculoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Portal.Modules.Carro.Veiculo", b =>
+                {
+                    b.HasOne("Portal.Core.Dados.Utilizador", null)
+                        .WithMany()
+                        .HasForeignKey("UtilizadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Portal.Modules.Investimentos.Operacao", b =>
                 {
                     b.HasOne("Portal.Core.Dados.Utilizador", null)
                         .WithMany()

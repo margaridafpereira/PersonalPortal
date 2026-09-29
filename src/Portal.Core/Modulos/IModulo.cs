@@ -29,4 +29,16 @@ public interface IModulo
     void MapearEndpoints(IEndpointRouteBuilder rotas) { }
 
     Task<CartaoPainel> ObterCartaoAsync(ContextoUtilizador contexto, CancellationToken ct);
+
+    /// <summary>
+    /// Consultas que o assistente de IA pode fazer a esta secção. Uma secção nova traz as suas e o assistente
+    /// passa a saber responder sobre ela, sem mudar nada no módulo do assistente.
+    /// </summary>
+    IReadOnlyList<FerramentaAssistente> FerramentasAssistente => [];
+
+    /// <summary>
+    /// Prazos desta secção para os avisos por email. A plataforma decide quando avisar (dias de antecedência nas preferências)
+    /// e não repete um aviso já enviado; a <see cref="AvisoPrazo.Chave"/> identifica o prazo entre execuções.
+    /// </summary>
+    Task<IReadOnlyList<AvisoPrazo>> ObterAvisosAsync(ContextoUtilizador contexto, CancellationToken ct) => Task.FromResult<IReadOnlyList<AvisoPrazo>>([]);
 }

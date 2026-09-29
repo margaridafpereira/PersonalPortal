@@ -1,13 +1,23 @@
+using System.Net;
 using Portal.Api;
+using Portal.Api.Avisos;
 using Portal.Core.Dados;
+using Portal.Modules.Assistente;
 using Portal.Modules.Perfil;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Numa rede de empresa, o proxy do sistema pede autenticação (407) e os serviços externos (câmbios do BdP,
+// preços da DGEG, fornecedor de IA) falham. As credenciais do Windows chegam; sem proxy, isto não faz nada.
+if (builder.Configuration.GetValue("Rede:ProxyComCredenciaisWindows", true))
+    HttpClient.DefaultProxy.Credentials = CredentialCache.DefaultNetworkCredentials;
 
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddBaseDeDados(builder.Configuration);
 builder.Services.AddModulos(builder.Configuration);
+builder.Services.AddAssistente(builder.Configuration);
+builder.Services.AddAvisos(builder.Configuration);
 
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<Utilizador>(o =>
@@ -45,6 +55,8 @@ app.MapPost("/api/auth/logout", async (Microsoft.AspNetCore.Identity.SignInManag
 app.MapPerfil();
 app.MapPainel();
 app.MapModulos();
+app.MapAssistente();
+app.MapAvisos();
 
 app.Run();
 

@@ -5,11 +5,13 @@ import { Icone, type NomeIcone } from '../componentes/Icone'
 const aparencia: Record<string, { icone: NomeIcone; cor: string; acao: string }> = {
   apoios: { icone: 'escudo', cor: 'verde', acao: 'Ver apoios e prazos' },
   anuncios: { icone: 'casa', cor: 'azul', acao: 'Abrir anúncios' },
+  carro: { icone: 'carro', cor: 'laranja', acao: 'Ver carro e combustíveis' },
+  investimentos: { icone: 'grafico', cor: 'roxo', acao: 'Preparar o Anexo J' },
 }
 
 // Campos que contam para a barra de "perfil completo".
 const camposPerfil: (keyof Perfil)[] = [
-  'dataNascimento', 'concelho', 'residenteFiscal', 'dependente', 'categoriaRendimento',
+  'nome', 'dataNascimento', 'concelho', 'residenteFiscal', 'dependente', 'categoriaRendimento',
   'rendimentoAnualAgregado', 'numeroAdultos', 'situacaoHabitacao', 'procuraComprarCasa',
 ]
 
@@ -40,7 +42,7 @@ export function Painel({ email }: { email: string }) {
       <section className="heroi">
         <div>
           <p className="suave">{saudacao()},</p>
-          <h1>{email.split('@')[0]}</h1>
+          <h1>{perfil.nome ?? email.split('@')[0]}</h1>
           <p className="suave">O que a plataforma sabe sobre ti e o que podes fazer hoje.</p>
         </div>
         <a href="#/perfil" className="progresso-perfil">
@@ -58,7 +60,7 @@ export function Painel({ email }: { email: string }) {
       </section>
 
       {cartoes.length === 0 && (
-        <p>Não tens secções ativas. <a href="#/preferencias">Escolhe-as nas preferências.</a></p>
+        <p>Não tens secções ativas. <a href="#/perfil">Escolhe-as nas preferências do perfil.</a></p>
       )}
 
       <div className="grelha">

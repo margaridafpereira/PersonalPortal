@@ -69,6 +69,38 @@ public sealed class ModuloAnuncios : IModulo
 
     public void MapearEndpoints(IEndpointRouteBuilder rotas) => EndpointsAnuncios.Mapear(rotas);
 
+    public IReadOnlyList<FerramentaAssistente> FerramentasAssistente { get; } =
+    [
+        new("imoveis_seguidos",
+            "Imóveis que a pessoa segue (título, tipologia, área, concelho, estado, notas e histórico de preços) e as pesquisas de casas guardadas.",
+            [],
+            async (ctx, _, ct) =>
+            {
+                var db = ctx.Servicos.GetRequiredService<PortalDbContext>();
+                var favoritos = await db.Set<ImovelFavorito>().Where(f => f.UtilizadorId == ctx.UtilizadorId).ToListAsync(ct);
+                var pesquisas = await db.Set<PesquisaGuardada>().Where(p => p.UtilizadorId == ctx.UtilizadorId).ToListAsync(ct);
+                return new
+                {
+                    Favoritos = favoritos.Select(f => new
+                    {
+                        f.Titulo, f.Tipo, f.Tipologia, f.AreaM2, f.Concelho, f.Estado, f.Notas, f.Url,
+                        Precos = f.Precos.OrderBy(p => p.Data).Select(p => new { p.Data, p.Preco }),
+                    }),
+                    Pesquisas = pesquisas.Select(p => new { p.Nome, p.Negocio, p.Tipo, p.Distrito, p.Concelho, p.PrecoMaximo, p.QuartosMinimo }),
+                };
+            }),
+        new("mediana_precos_casas",
+            "Mediana do preço de venda de casas (€/m²) num concelho, do INE, com o período a que se refere.",
+            [new("concelho", "string", "Nome do concelho. Se omitido, usa o concelho do perfil.")],
+            async (ctx, argumentos, ct) =>
+            {
+                if ((argumentos.Texto("concelho") ?? ctx.Perfil.Concelho) is not { } concelho)
+                    return new { Erro = "Não foi indicado nenhum concelho e o perfil não tem concelho." };
+                return await ctx.Servicos.GetRequiredService<IMercadoImobiliario>().MedianaVendasAsync(concelho, ct)
+                    ?? (object)new { Erro = $"Sem dados do INE para {concelho}." };
+            }),
+    ];
+
     public async Task<CartaoPainel> ObterCartaoAsync(ContextoUtilizador contexto, CancellationToken ct)
     {
         var perfil = contexto.Perfil;

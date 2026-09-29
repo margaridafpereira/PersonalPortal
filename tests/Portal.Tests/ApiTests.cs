@@ -12,13 +12,26 @@ namespace Portal.Tests;
 /// <summary>Arranca a API real com uma base SQLite temporária.</summary>
 public sealed class PortalFactory : WebApplicationFactory<Program>
 {
+    /// <summary>Os emails "enviados" nos testes ficam aqui.</summary>
+    public EmailsFalsos Emails { get; } = new();
+
     private readonly string _ficheiro = Path.Combine(Path.GetTempPath(), $"portal-teste-{Guid.NewGuid():N}.db");
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
         builder.UseSetting("BaseDeDados:Fornecedor", "Sqlite");
         builder.UseSetting("ConnectionStrings:Portal", $"Data Source={_ficheiro};Pooling=False");
-        builder.ConfigureTestServices(s => s.AddSingleton<IMercadoImobiliario, MercadoFalso>());
+        builder.UseSetting("Assistente:Chave", "chave-de-teste");
+        builder.UseSetting("Email:AvisosAutomaticos", "false");
+        builder.ConfigureTestServices(s =>
+        {
+            s.AddSingleton<IMercadoImobiliario, MercadoFalso>();
+            s.AddSingleton<Portal.Modules.Carro.IPrecosCombustiveis, PrecosFalsos>();
+            s.AddSingleton<Portal.Modules.Investimentos.ICambios, CambiosFalsos>();
+            s.AddSingleton<Portal.Modules.Assistente.IModeloLinguagem, ModeloFalso>();
+            s.AddSingleton<Portal.Modules.Carro.IPostosCarregamento, CarregamentoFalso>();
+            s.AddSingleton<Portal.Api.Avisos.IEnviadorEmail>(Emails);
+        });
     }
 
     protected override void Dispose(bool disposing)
@@ -58,7 +71,7 @@ public class ApiTests(PortalFactory factory) : IClassFixture<PortalFactory>
 
         var painel = await cliente.GetFromJsonAsync<List<CartaoPainel>>("/api/painel");
 
-        Assert.Equal(["apoios", "anuncios"], painel!.Select(c => c.ModuloId));
+        Assert.Equal(["apoios", "anuncios", "carro", "investimentos"], painel!.Select(c => c.ModuloId));
     }
 
     [Fact]
