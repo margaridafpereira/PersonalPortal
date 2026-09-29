@@ -47,13 +47,16 @@ Carregar em **Aplicar**: a Web App reinicia.
 
 ## 3. Ligar ao GitHub (publicação automática)
 
-Web App → **Implementação → Centro de Implementação**:
-- **Origem:** GitHub → autorizar a conta.
-- **Organização / Repositório / Ramo:** `margaridafpereira` / `PersonalPortal` / `main`.
-- **Tipo de autenticação:** Identidade atribuída pelo utilizador (a opção recomendada; não precisa de palavras-passe).
-- **Guardar.**
+O ficheiro `.github/workflows/publicar-azure.yml` compila o frontend, corre os testes e publica a API com o frontend dentro, a cada envio para `main`. Entra na Azure com o **perfil de publicação**:
 
-A Azure cria no repositório um ficheiro em `.github/workflows/` e os segredos para entrar na Azure. Esse ficheiro, tal como vem, não compila o frontend: é substituído pelos passos do portal (compilar o frontend, correr os testes, publicar a API com o frontend em `wwwroot`), mantendo os segredos que a Azure criou.
+1. Web App → **Definições → Configuração → Definições gerais** → **SCM Basic Auth Publishing Credentials: On** → Guardar.
+2. Web App → **Descrição geral** → **Transferir perfil de publicação** (ficheiro `.PublishSettings`).
+3. GitHub → repositório → **Settings → Secrets and variables → Actions → New repository secret**: nome `AZURE_WEBAPP_PUBLISH_PROFILE`, valor = o conteúdo todo do ficheiro.
+4. GitHub → **Actions → Publicar na Azure → Run workflow** (ou qualquer `git push`).
+
+O perfil de publicação é uma palavra-passe: não o ponhas no código. Se o reiniciares na Azure ("Reset publish profile"), atualiza o segredo.
+
+Nota: o Centro de Implementação da Azure com "Identidade atribuída pelo utilizador" falhou em 29/09/2026 com "We couldn't verify how GitHub Actions issues OIDC tokens for this repository"; por isso o portal usa o perfil de publicação. Se o nome da Web App for outro que não `personal-portal`, muda `NOME_WEB_APP` no ficheiro.
 
 ## 4. Avisos diários
 

@@ -1,0 +1,57 @@
+# Publica o portal na Azure a cada envio para o ramo main.
+# Compila o frontend, corre os testes e publica a API com o frontend dentro (wwwroot), numa só aplicação.
+# Entra na Azure com o perfil de publicação, guardado no segredo AZURE_WEBAPP_PUBLISH_PROFILE
+# (ver docs/publicar-na-azure.md). Sem esse segredo, só compila e testa.
+name: Publicar na Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  NOME_WEB_APP: personal-portal
+  TEM_PERFIL: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE != '' }}
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Compilar o frontend
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Correr os testes
+        run: dotnet test Portal.sln -c Release
+
+      - name: Publicar a API com o frontend
+        run: |
+          dotnet publish src/Portal.Api/Portal.Api.csproj -c Release -o publicar
+          mkdir -p publicar/wwwroot
+          cp -r web/dist/. publicar/wwwroot/
+
+      - name: Enviar para a Azure
+        if: env.TEM_PERFIL == 'true'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.NOME_WEB_APP }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publicar
+
+      - name: Sem perfil de publicação
+        if: env.TEM_PERFIL != 'true'
+        run: echo "::notice::Compilado e testado, mas não publicado. Falta o segredo AZURE_WEBAPP_PUBLISH_PROFILE (ver docs/publicar-na-azure.md)."
