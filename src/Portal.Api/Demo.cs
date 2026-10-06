@@ -39,7 +39,7 @@ public static class Demo
             var leitura = HttpMethods.IsGet(ctx.Request.Method) || HttpMethods.IsHead(ctx.Request.Method);
             if (!leitura && EmDemo(ctx.User) && !PermitidosEmDemo.Any(p => ctx.Request.Path.Equals(p, StringComparison.OrdinalIgnoreCase)))
             {
-                await Results.Problem("Esta é a conta de demonstração: podes ver tudo, mas não alterar. Os dados são de exemplo.",
+                await Results.Problem(Portal.Core.Idioma.T("Esta é a conta de demonstração: podes ver tudo, mas não alterar. Os dados são de exemplo.", "This is the demo account: you can look at everything but not change it. The data is fictitious."),
                     statusCode: StatusCodes.Status403Forbidden).ExecuteAsync(ctx);
                 return;
             }
@@ -113,7 +113,7 @@ public static class Demo
         db.Perfis.Add(new PerfilUtilizador
         {
             UtilizadorId = id,
-            Nome = "Ana (exemplo)",
+            Nome = "Ana (demo)",
             DataNascimento = hoje.AddYears(-29).AddMonths(-4),
             Concelho = "Porto",
             Freguesia = "Bonfim",
@@ -172,7 +172,7 @@ public static class Demo
         {
             Id = Guid.NewGuid(),
             UtilizadorId = id,
-            Nome = "Clio (exemplo)",
+            Nome = "Clio (demo)",
             Matricula = "AA-00-AA",
             Categoria = CategoriaVeiculo.LigeiroPassageiros,
             Combustivel = Combustivel.Gasolina95,

@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
@@ -45,7 +46,7 @@ internal static class EndpointsAnuncios
         grupo.MapPost("/pesquisas", async (ClaimsPrincipal user, NovaPesquisa dados, PortalDbContext db, TimeProvider relogio, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(dados.Concelho) || string.IsNullOrWhiteSpace(dados.Distrito))
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["Concelho"] = ["Indica o distrito e o concelho."] });
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["Concelho"] = [T("Indica o distrito e o concelho.", "Enter the district and the municipality.")] });
 
             var pesquisa = new PesquisaGuardada
             {
@@ -135,7 +136,7 @@ internal static class EndpointsAnuncios
             IMercadoImobiliario mercado, IFonteIndexantes fonte, TimeProvider relogio, CancellationToken ct) =>
         {
             if (dados.Preco <= 0)
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["Preco"] = ["O preço tem de ser positivo."] });
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["Preco"] = [T("O preço tem de ser positivo.", "The price must be positive.")] });
 
             var f = await db.Set<ImovelFavorito>().FirstOrDefaultAsync(f => f.Id == id && f.UtilizadorId == Id(user), ct);
             if (f is null)
@@ -201,9 +202,9 @@ internal static class EndpointsAnuncios
 
     private static string NomePorOmissao(NovaPesquisa p)
     {
-        var tipo = p.Tipo switch { TipoImovel.Apartamento => "Apartamentos", TipoImovel.Moradia => "Moradias", _ => "Terrenos" };
-        var preco = p.PrecoMaximo is { } v ? $" até {v.ToString("N0", CultureInfo.GetCultureInfo("pt-PT"))} €" : "";
-        return $"{tipo} {(p.Negocio == Negocio.Comprar ? "à venda" : "para arrendar")} em {p.Concelho.Trim()}{preco}";
+        var tipo = p.Tipo switch { TipoImovel.Apartamento => T("Apartamentos", "Flats"), TipoImovel.Moradia => T("Moradias", "Houses"), _ => T("Terrenos", "Plots") };
+        var preco = p.PrecoMaximo is { } v ? T(" até ", " up to ") + $"{v.ToString("N0", CultureInfo.GetCultureInfo("pt-PT"))} €" : "";
+        return $"{tipo} {(p.Negocio == Negocio.Comprar ? T("à venda", "for sale") : T("para arrendar", "to rent"))} {T("em", "in")} {p.Concelho.Trim()}{preco}";
     }
 
     private static DateOnly Hoje(TimeProvider relogio) => DateOnly.FromDateTime(relogio.GetLocalNow().DateTime);

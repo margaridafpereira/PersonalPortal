@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -43,6 +44,13 @@ public sealed record AnaliseFicheiro(
 /// </summary>
 public static partial class Importacao
 {
+    private static string DataInvalida(int linha, string texto) =>
+        T($"Linha {linha}: data inválida \"{texto}\"; linha ignorada.", $"Line {linha}: invalid date \"{texto}\"; line skipped.");
+
+    private static string Ignoradas(int quantas, string tipo, bool explicar = false) =>
+        T($"Ignoradas {quantas} linha(s) \"{tipo}\"{(explicar ? " (não são compras, vendas nem dividendos)" : "")}.",
+          $"Skipped {quantas} line(s) \"{tipo}\"{(explicar ? " (not buys, sells or dividends)" : "")}.");
+
     public const string CabecalhoModelo = "data,tipo,isin,nome,quantidade,preco,moeda,comissoes_eur,retencao,moeda_retencao";
 
     /// <summary>Valores distintos por coluna no ecrã de mapeamento. Uma coluna com mais do que isto não é a do tipo.</summary>
@@ -81,8 +89,8 @@ public static partial class Importacao
         "universal" when mapeamento is not null => Universal(conteudo, mapeamento),
         "universal" => Analisar(conteudo).Sugestao is { } sugerido
             ? Universal(conteudo, sugerido)
-            : new([], ["Não foi possível reconhecer as colunas; indica-as à mão."]),
-        _ => new([], [$"Formato desconhecido: {formato}."]),
+            : new([], [T("Não foi possível reconhecer as colunas; indica-as à mão.", "Could not recognise the columns; map them by hand.")]),
+        _ => new([], [T($"Formato desconhecido: {formato}.", $"Unknown format: {formato}.")]),
     };
 
     // ------------------------------------------------------------------ Trading 212
@@ -100,12 +108,12 @@ public static partial class Importacao
     {
         var linhas = Csv.Ler(conteudo, ',');
         if (linhas.Count == 0)
-            return new([], ["O ficheiro está vazio."]);
+            return new([], [FicheiroVazio]);
 
         var col = Csv.Colunas(linhas[0]);
         var faltam = ColunasTrading212.Where(c => !col.ContainsKey(c)).ToList();
         if (faltam.Count > 0)
-            return new([], [$"Não parece um ficheiro da Trading 212: faltam as colunas {string.Join(", ", faltam)}. Experimenta \"Outra corretora\"."]);
+            return new([], [T($"Não parece um ficheiro da Trading 212: faltam as colunas {string.Join(", ", faltam)}. Experimenta \"Outra corretora\".", $"This does not look like a Trading 212 file: columns {string.Join(", ", faltam)} are missing. Try \"Other broker\".")]);
 
         var operacoes = new List<Operacao>();
         var avisos = new List<string>();
@@ -128,7 +136,7 @@ public static partial class Importacao
 
             if (!TentarData(C("Time"), out var momento))
             {
-                avisos.Add($"Linha {n}: data inválida \"{C("Time")}\"; linha ignorada.");
+                avisos.Add(DataInvalida(n, C("Time")));
                 continue;
             }
 
@@ -167,11 +175,11 @@ public static partial class Importacao
                 operacoes.Add(op);
         }
 
-        avisos.AddRange(ignoradas.Select(kv => $"Ignoradas {kv.Value} linha(s) \"{kv.Key}\" (não são compras, vendas nem dividendos)."));
+        avisos.AddRange(ignoradas.Select(kv => Ignoradas(kv.Value, kv.Key, explicar: true)));
         avisos.AddRange(taxasNaoEur.Select(kv =>
-            $"Há {kv.Value.ToString("0.00", CultureInfo.InvariantCulture)} {kv.Key} de taxas em operações que também tinham taxas em euros; ficaram fora das despesas. Confirma as despesas."));
+            T($"Há {kv.Value.ToString("0.00", CultureInfo.InvariantCulture)} {kv.Key} de taxas em operações que também tinham taxas em euros; ficaram fora das despesas. Confirma as despesas.", $"There are {kv.Value.ToString("0.00", CultureInfo.InvariantCulture)} {kv.Key} in fees on transactions that also had fees in euros; they were left out of expenses. Check the expenses.")));
         if (!col.ContainsKey("Currency conversion fee"))
-            avisos.Add("O ficheiro não tem a coluna de comissões de câmbio; confirma as despesas.");
+            avisos.Add(T("O ficheiro não tem a coluna de comissões de câmbio; confirma as despesas.", "The file has no currency-conversion fee column; check the expenses."));
         return new(operacoes, avisos);
     }
 
@@ -181,12 +189,12 @@ public static partial class Importacao
     {
         var linhas = Csv.Ler(conteudo, ',');
         if (linhas.Count == 0)
-            return new([], ["O ficheiro está vazio."]);
+            return new([], [FicheiroVazio]);
 
         var col = Csv.Colunas(linhas[0]);
         var faltam = CabecalhoModelo.Split(',').Where(c => !col.ContainsKey(c)).ToList();
         if (faltam.Count > 0)
-            return new([], [$"Faltam as colunas {string.Join(", ", faltam)}. Usa o modelo do portal."]);
+            return new([], [T($"Faltam as colunas {string.Join(", ", faltam)}. Usa o modelo do portal.", $"Columns {string.Join(", ", faltam)} are missing. Use the portal template.")]);
 
         var operacoes = new List<Operacao>();
         var avisos = new List<string>();
@@ -203,13 +211,13 @@ public static partial class Importacao
             };
             if (tipo is null)
             {
-                avisos.Add($"Linha {n}: tipo \"{C("tipo")}\" desconhecido (usa compra, venda ou dividendo).");
+                avisos.Add(T($"Linha {n}: tipo \"{C("tipo")}\" desconhecido (usa compra, venda ou dividendo).", $"Line {n}: unknown type \"{C("tipo")}\" (use compra, venda or dividendo)."));
                 continue;
             }
 
             if (!TentarData(C("data"), out var momento))
             {
-                avisos.Add($"Linha {n}: data inválida \"{C("data")}\" (usa AAAA-MM-DD).");
+                avisos.Add(T($"Linha {n}: data inválida \"{C("data")}\" (usa AAAA-MM-DD).", $"Line {n}: invalid date \"{C("data")}\" (use YYYY-MM-DD)."));
                 continue;
             }
 
@@ -222,7 +230,7 @@ public static partial class Importacao
                 TipoAtivo = Classificacao.Sugerir(C("nome")),
                 Moeda = C("moeda") is { Length: > 0 } m ? m.ToUpperInvariant() : "EUR",
                 Comissoes = NumeroOpcional(C("comissoes_eur"), "comissões", n, avisos),
-                RetencaoFonte = NumeroOpcional(C("retencao"), "imposto retido", n, avisos),
+                RetencaoFonte = NumeroOpcional(C("retencao"), T("imposto retido", "withholding tax"), n, avisos),
                 MoedaRetencao = C("moeda_retencao") is { Length: > 0 } mr ? mr.ToUpperInvariant() : null,
                 Corretora = "Modelo",
             };
@@ -257,7 +265,7 @@ public static partial class Importacao
         var separador = Csv.DetetarSeparador(conteudo);
         var linhas = Csv.Ler(conteudo, separador);
         if (linhas.Count == 0)
-            return new("universal", separador, [], [], null, ["o ficheiro está vazio"], []);
+            return new("universal", separador, [], [], null, [T("o ficheiro está vazio", "the file is empty")], []);
 
         var cabecalho = linhas[0];
         var normalizados = cabecalho.Select(Normalizar).ToArray();
@@ -324,7 +332,7 @@ public static partial class Importacao
     public static ResultadoImportacao Universal(string conteudo, Mapeamento m)
     {
         if (m.Moeda is null && !MoedaValida(m.MoedaFixa))
-            return new([], [$"Moeda \"{m.MoedaFixa}\" inválida: indica o código de 3 letras (ex.: EUR, USD)."]);
+            return new([], [T($"Moeda \"{m.MoedaFixa}\" inválida: indica o código de 3 letras (ex.: EUR, USD).", $"Invalid currency \"{m.MoedaFixa}\": use the 3-letter code (e.g. EUR, USD).")]);
 
         var separador = Csv.DetetarSeparador(conteudo);
         var linhas = Csv.Ler(conteudo, separador);
@@ -354,14 +362,14 @@ public static partial class Importacao
                 tipo = q > 0 ? TipoOperacao.Compra : TipoOperacao.Venda;
             else
             {
-                avisos.Add($"Linha {n}: não foi possível saber se é compra, venda ou dividendo.");
+                avisos.Add(T($"Linha {n}: não foi possível saber se é compra, venda ou dividendo.", $"Line {n}: could not tell whether it is a buy, a sell or a dividend."));
                 continue;
             }
 
             var textoData = m.Hora is null ? C(m.Data) : $"{C(m.Data)} {C(m.Hora)}";
             if (!TentarData(textoData, out var momento))
             {
-                avisos.Add($"Linha {n}: data inválida \"{textoData}\"; linha ignorada.");
+                avisos.Add(DataInvalida(n, textoData));
                 continue;
             }
 
@@ -376,7 +384,7 @@ public static partial class Importacao
                 TipoAtivo = Classificacao.Sugerir(nome),
                 Moeda = (C(m.Moeda) is { Length: 3 } md ? md : m.MoedaFixa ?? "EUR").ToUpperInvariant(),
                 Comissoes = Math.Abs(NumeroOpcional(C(m.Comissoes), "comissões", n, avisos)),
-                RetencaoFonte = Math.Abs(NumeroOpcional(C(m.Retencao), "imposto retido", n, avisos)),
+                RetencaoFonte = Math.Abs(NumeroOpcional(C(m.Retencao), T("imposto retido", "withholding tax"), n, avisos)),
                 MoedaRetencao = C(m.MoedaRetencao) is { Length: 3 } mr ? mr.ToUpperInvariant() : null,
                 Corretora = "Importação universal",
                 // Sem id da corretora, a própria linha serve de id: reimportar o ficheiro não duplica.
@@ -386,9 +394,9 @@ public static partial class Importacao
                 operacoes.Add(op);
         }
 
-        avisos.AddRange(ignoradas.Select(kv => $"Ignoradas {kv.Value} linha(s) do tipo \"{(kv.Key.Length > 0 ? kv.Key : "(vazio)")}\"."));
+        avisos.AddRange(ignoradas.Select(kv => Ignoradas(kv.Value, kv.Key.Length > 0 ? kv.Key : T("(vazio)", "(empty)"))));
         if (m.Comissoes is null)
-            avisos.Add("Não foi indicada a coluna das comissões: as despesas ficaram a zero.");
+            avisos.Add(T("Não foi indicada a coluna das comissões: as despesas ficaram a zero.", "No fee column was chosen: expenses were set to zero."));
         return new(operacoes, avisos);
     }
 
@@ -402,12 +410,12 @@ public static partial class Importacao
     {
         if (!TentarNumero(quantidade, out var q) || q == 0)
         {
-            avisos.Add($"Linha {linha}: quantidade \"{quantidade}\" inválida; linha ignorada.");
+            avisos.Add(T($"Linha {linha}: quantidade \"{quantidade}\" inválida; linha ignorada.", $"Line {linha}: invalid quantity \"{quantidade}\"; line skipped."));
             return false;
         }
         if (!TentarNumero(preco, out var p))
         {
-            avisos.Add($"Linha {linha}: preço \"{preco}\" inválido; linha ignorada.");
+            avisos.Add(T($"Linha {linha}: preço \"{preco}\" inválido; linha ignorada.", $"Line {linha}: invalid price \"{preco}\"; line skipped."));
             return false;
         }
         return Aceitar(op, q, p, linha, avisos);
@@ -418,17 +426,17 @@ public static partial class Importacao
     {
         if (op.Ativo.Length is 0 or > 20)
         {
-            avisos.Add($"Linha {linha}: ISIN \"{op.Ativo}\" inválido; linha ignorada.");
+            avisos.Add(T($"Linha {linha}: ISIN \"{op.Ativo}\" inválido; linha ignorada.", $"Line {linha}: invalid ISIN \"{op.Ativo}\"; line skipped."));
             return false;
         }
         if (quantidade == 0)
         {
-            avisos.Add($"Linha {linha}: quantidade zero; linha ignorada.");
+            avisos.Add(T($"Linha {linha}: quantidade zero; linha ignorada.", $"Line {linha}: zero quantity; line skipped."));
             return false;
         }
         if (!MoedaValida(op.Moeda))
         {
-            avisos.Add($"Linha {linha}: moeda \"{op.Moeda}\" inválida; linha ignorada.");
+            avisos.Add(T($"Linha {linha}: moeda \"{op.Moeda}\" inválida; linha ignorada.", $"Line {linha}: invalid currency \"{op.Moeda}\"; line skipped."));
             return false;
         }
 
@@ -450,7 +458,7 @@ public static partial class Importacao
     {
         if (TentarNumero(texto, out var v))
             return v;
-        avisos.Add($"Linha {linha}: {campo} \"{texto}\" ilegível; ficou a zero.");
+        avisos.Add(T($"Linha {linha}: {campo} \"{texto}\" ilegível; ficou a zero.", $"Line {linha}: unreadable {campo} \"{texto}\"; set to zero."));
         return 0m;
     }
 

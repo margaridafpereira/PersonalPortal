@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
@@ -18,9 +19,13 @@ public sealed class ModuloAnuncios : IModulo
 {
     private static readonly CultureInfo Pt = CultureInfo.GetCultureInfo("pt-PT");
 
+    /// <summary>O INE escreve o período em português ("1.º Trimestre de 2026"); em inglês fica "Q1 2026".</summary>
+    private static string PeriodoIne(string periodo) =>
+        EmIngles ? System.Text.RegularExpressions.Regex.Replace(periodo, @"^(\d)\.º Trimestre de (\d{4})$", "Q$1 $2") : periodo;
+
     public string Id => "anuncios";
-    public string Nome => "Radar de anúncios";
-    public string Descricao => "Casas e terrenos: pesquisas guardadas nos vários portais e os anúncios que segues.";
+    public string Nome => T("Radar de anúncios", "Property radar");
+    public string Descricao => T("Casas e terrenos: pesquisas guardadas nos vários portais e os anúncios que segues.", "Homes and plots: saved searches across the portals and the listings you follow.");
 
     public IReadOnlyCollection<string> CamposPerfil { get; } =
     [
@@ -112,29 +117,29 @@ public sealed class ModuloAnuncios : IModulo
         var pesquisas = await db.Set<PesquisaGuardada>().CountAsync(p => p.UtilizadorId == contexto.UtilizadorId, ct);
         var favoritos = await db.Set<ImovelFavorito>().Where(f => f.UtilizadorId == contexto.UtilizadorId && f.Estado != EstadoFavorito.Descartado).ToListAsync(ct);
 
-        indicadores.Add(new Indicador(favoritos.Count.ToString(), favoritos.Count == 1 ? "imóvel seguido" : "imóveis seguidos", "positivo"));
-        indicadores.Add(new Indicador(pesquisas.ToString(), pesquisas == 1 ? "pesquisa guardada" : "pesquisas guardadas"));
+        indicadores.Add(new Indicador(favoritos.Count.ToString(), favoritos.Count == 1 ? T("imóvel seguido", "followed listing") : T("imóveis seguidos", "followed listings"), "positivo"));
+        indicadores.Add(new Indicador(pesquisas.ToString(), pesquisas == 1 ? T("pesquisa guardada", "saved search") : T("pesquisas guardadas", "saved searches")));
 
         var descidas = favoritos.Count(f => f.Precos.Count >= 2 && f.Precos.OrderBy(p => p.Data).Last().Preco < f.Precos.OrderBy(p => p.Data).First().Preco);
         if (descidas > 0)
-            indicadores.Add(new Indicador(descidas.ToString(), descidas == 1 ? "baixou de preço" : "baixaram de preço", "aviso"));
+            indicadores.Add(new Indicador(descidas.ToString(), descidas == 1 ? T("baixou de preço", "price dropped") : T("baixaram de preço", "prices dropped"), "aviso"));
 
         if (!string.IsNullOrWhiteSpace(perfil.Concelho))
         {
             var mediana = await contexto.Servicos.GetRequiredService<IMercadoImobiliario>().MedianaVendasAsync(perfil.Concelho, ct);
             if (mediana?.Total is { } m)
-                itens.Add(new ItemCartao($"Mediana de venda em {mediana.Concelho}: {m.ToString("N0", Pt)} €/m²", $"INE, {mediana.Periodo}"));
+                itens.Add(new ItemCartao(T($"Mediana de venda em {mediana.Concelho}: {m.ToString("N0", Pt)} €/m²", $"Median sale price in {mediana.Concelho}: {m.ToString("N0", Pt)} €/m²"), $"INE, {PeriodoIne(mediana.Periodo)}"));
         }
 
         if (perfil.ProcuraComprarCasa == true && perfil.OrcamentoCompra is { } orcamento)
         {
-            var onde = string.IsNullOrWhiteSpace(perfil.Concelho) ? "" : $" em {perfil.Concelho}";
-            itens.Add(new ItemCartao($"Procuras casa{onde} até {orcamento.ToString("C0", Pt)}."));
+            var onde = string.IsNullOrWhiteSpace(perfil.Concelho) ? "" : T($" em {perfil.Concelho}", $" in {perfil.Concelho}");
+            itens.Add(new ItemCartao(T($"Procuras casa{onde} até {orcamento.ToString("C0", Pt)}.", $"Looking for a home{onde} up to {orcamento.ToString("C0", Pt)}.")));
         }
 
         var resumo = favoritos.Count == 0 && pesquisas == 0
-            ? "Guarda uma pesquisa e abre-a em todos os portais com um clique."
-            : "As tuas pesquisas e os imóveis que segues.";
+            ? T("Guarda uma pesquisa e abre-a em todos os portais com um clique.", "Save a search and open it on every portal in one click.")
+            : T("As tuas pesquisas e os imóveis que segues.", "Your searches and the listings you follow.");
 
         return new CartaoPainel(Id, Nome, resumo, itens, emFalta) { Indicadores = indicadores };
     }
@@ -154,11 +159,11 @@ internal static class EtiquetasApoios
 
         var etiquetas = new List<string>();
         if (valor <= ix[ChavesIndexantes.ImtJovemIsencaoTotal])
-            etiquetas.Add("IMT Jovem: isenção total");
+            etiquetas.Add(T("IMT Jovem: isenção total", "IMT Jovem: full exemption"));
         else if (valor <= ix[ChavesIndexantes.ImtJovemIsencaoParcial])
-            etiquetas.Add("IMT Jovem: isenção parcial");
+            etiquetas.Add(T("IMT Jovem: isenção parcial", "IMT Jovem: partial exemption"));
         if (valor <= ix[ChavesIndexantes.GarantiaPublicaValorMaximo])
-            etiquetas.Add("Garantia pública");
+            etiquetas.Add(T("Garantia pública", "Public guarantee"));
         return etiquetas;
     }
 }

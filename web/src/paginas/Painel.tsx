@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api, nomesCampos, type CartaoPainel, type Perfil } from '../api'
 import { Icone, type NomeIcone } from '../componentes/Icone'
+import { t } from '../i18n'
 
-const aparencia: Record<string, { icone: NomeIcone; cor: string; acao: string }> = {
-  apoios: { icone: 'escudo', cor: 'verde', acao: 'Ver apoios e prazos' },
-  anuncios: { icone: 'casa', cor: 'azul', acao: 'Abrir anúncios' },
-  carro: { icone: 'carro', cor: 'laranja', acao: 'Ver carro e combustíveis' },
-  investimentos: { icone: 'grafico', cor: 'roxo', acao: 'Preparar o Anexo J' },
-}
+const aparencia = (): Record<string, { icone: NomeIcone; cor: string; acao: string }> => ({
+  apoios: { icone: 'escudo', cor: 'verde', acao: t('Ver apoios e prazos', 'See benefits and deadlines') },
+  anuncios: { icone: 'casa', cor: 'azul', acao: t('Abrir anúncios', 'Open listings') },
+  carro: { icone: 'carro', cor: 'laranja', acao: t('Ver carro e combustíveis', 'See car and fuel') },
+  investimentos: { icone: 'grafico', cor: 'roxo', acao: t('Preparar o Anexo J', 'Prepare Annex J') },
+})
 
 // Campos que contam para a barra de "perfil completo".
 const camposPerfil: (keyof Perfil)[] = [
@@ -17,7 +18,7 @@ const camposPerfil: (keyof Perfil)[] = [
 
 function saudacao() {
   const h = new Date().getHours()
-  return h < 12 ? 'Bom dia' : h < 20 ? 'Boa tarde' : 'Boa noite'
+  return h < 12 ? t('Bom dia', 'Good morning') : h < 20 ? t('Boa tarde', 'Good afternoon') : t('Boa noite', 'Good evening')
 }
 
 export function Painel({ email }: { email: string }) {
@@ -43,29 +44,29 @@ export function Painel({ email }: { email: string }) {
         <div>
           <p className="suave">{saudacao()},</p>
           <h1>{perfil.nome ?? email.split('@')[0]}</h1>
-          <p className="suave">O que a plataforma sabe sobre ti e o que podes fazer hoje.</p>
+          <p className="suave">{t('O que a plataforma sabe sobre ti e o que podes fazer hoje.', 'What the platform knows about you and what you can do today.')}</p>
         </div>
         <a href="#/perfil" className="progresso-perfil">
           <div className="progresso-topo">
-            <span>Perfil</span>
+            <span>{t('Perfil', 'Profile')}</span>
             <strong>{percentagem}%</strong>
           </div>
-          <div className="barra" role="progressbar" aria-valuenow={percentagem} aria-valuemin={0} aria-valuemax={100} aria-label="Perfil preenchido">
+          <div className="barra" role="progressbar" aria-valuenow={percentagem} aria-valuemin={0} aria-valuemax={100} aria-label={t('Perfil preenchido', 'Profile completed')}>
             <div style={{ width: `${percentagem}%` }} />
           </div>
           <span className="pequeno suave">
-            {percentagem < 100 ? 'Completa o perfil para resultados mais certos →' : 'Perfil completo ✓'}
+            {percentagem < 100 ? t('Completa o perfil para resultados mais certos →', 'Complete your profile for more accurate results →') : t('Perfil completo ✓', 'Profile complete ✓')}
           </span>
         </a>
       </section>
 
       {cartoes.length === 0 && (
-        <p>Não tens secções ativas. <a href="#/perfil">Escolhe-as nas preferências do perfil.</a></p>
+        <p>{t('Não tens secções ativas.', 'You have no active sections.')} <a href="#/perfil">{t('Escolhe-as nas preferências do perfil.', 'Choose them in your profile preferences.')}</a></p>
       )}
 
       <div className="grelha">
         {cartoes.map(c => {
-          const a = aparencia[c.moduloId] ?? { icone: 'inicio' as NomeIcone, cor: 'azul', acao: 'Abrir' }
+          const a = aparencia()[c.moduloId] ?? { icone: 'inicio' as NomeIcone, cor: 'azul', acao: t('Abrir', 'Open') }
           return (
             <section key={c.moduloId} className={`cartao seccao seccao-${a.cor}`}>
               <header className="seccao-topo">
@@ -100,7 +101,7 @@ export function Painel({ email }: { email: string }) {
 
               {c.camposPerfilEmFalta.length > 0 && (
                 <p className="aviso pequeno">
-                  Falta no perfil: {c.camposPerfilEmFalta.map(f => nomesCampos[f] ?? f).join(', ')}.
+                  {t('Falta no perfil:', 'Missing from your profile:')} {c.camposPerfilEmFalta.map(f => nomesCampos[f] ?? f).join(', ')}.
                 </p>
               )}
 

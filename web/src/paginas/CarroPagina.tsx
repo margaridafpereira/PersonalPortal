@@ -6,13 +6,14 @@ import {
 } from '../api'
 import { Explicacao } from '../componentes/Explicacao'
 import { Icone, type NomeIcone } from '../componentes/Icone'
+import { lingua, localeDatas, t } from '../i18n'
 
 const iconesPrazo: Record<PrazoVeiculo['tipo'], NomeIcone> = {
   Inspecao: 'certo', Iuc: 'calendario', Seguro: 'escudo', Revisao: 'ajustes', CartaConducao: 'pessoa',
 }
-const nomesPrazo: Record<PrazoVeiculo['tipo'], string> = {
-  Inspecao: 'Inspeção', Iuc: 'IUC', Seguro: 'Seguro', Revisao: 'Revisão', CartaConducao: 'Carta',
-}
+const nomesPrazo = (): Record<PrazoVeiculo['tipo'], string> => ({
+  Inspecao: t('Inspeção', 'Inspection'), Iuc: 'IUC', Seguro: t('Seguro', 'Insurance'), Revisao: t('Revisão', 'Service'), CartaConducao: t('Carta', 'Licence'),
+})
 
 const vazio: DadosVeiculo = {
   nome: '', matricula: null, categoria: 'LigeiroPassageiros', combustivel: 'GasoleoSimples', dataPrimeiraMatricula: '',
@@ -38,7 +39,7 @@ export function CarroPagina() {
     api.perfil().then(p => { setConcelho(p.concelho); setFreguesia(p.freguesia) })
   }, [])
 
-  if (!veiculos) return <p>A carregar…</p>
+  if (!veiculos) return <p>{t('A carregar…', 'Loading…')}</p>
 
   const prazos = [...veiculos.flatMap(v => v.prazos), ...(carta?.prazo && carta.prazo.diasEmFalta >= 0 && carta.prazo.diasEmFalta <= 366 ? [carta.prazo] : [])]
     .sort((a, b) => a.data.localeCompare(b.data))
@@ -51,12 +52,12 @@ export function CarroPagina() {
     <>
       <header className="pagina-topo">
         <div>
-          <h1>Carro</h1>
-          <p className="suave">Inspeção, IUC, seguro e carta sem esquecer, quanto gastas, e onde abastecer ou carregar mais barato.</p>
+          <h1>{t('Carro', 'Car')}</h1>
+          <p className="suave">{t('Inspeção, IUC, seguro e carta sem esquecer, quanto gastas, e onde abastecer ou carregar mais barato.', 'Inspection, road tax, insurance and licence on time, what you spend, and where to refuel or charge for less.')}</p>
         </div>
         {veiculos.length > 0 && (
-          <a className="botao" href="/api/carro/prazos.ics" download>
-            <Icone nome="calendario" tamanho={18} /> Adicionar ao calendário
+          <a className="botao" href={`/api/carro/prazos.ics?idioma=${lingua()}`} download>
+            <Icone nome="calendario" tamanho={18} /> {t('Adicionar ao calendário', 'Add to calendar')}
           </a>
         )}
       </header>
@@ -65,19 +66,19 @@ export function CarroPagina() {
 
       {!editar && (
         <button className="botao-grande" onClick={() => setEditar('novo')}>
-          <Icone nome="mais" tamanho={20} /> Adicionar veículo
+          <Icone nome="mais" tamanho={20} /> {t('Adicionar veículo', 'Add vehicle')}
         </button>
       )}
 
       {veiculos.length > 0 && (
         <div className="duas-colunas">
           <section>
-            <h2 className="titulo-seccao">Próximos prazos</h2>
+            <h2 className="titulo-seccao">{t('Próximos prazos', 'Upcoming deadlines')}</h2>
             <ol className="linha-tempo">
               {prazos.map(p => <LinhaPrazo key={p.veiculoId + p.tipo + p.data} prazo={p} concelho={concelho} />)}
             </ol>
 
-            <h2 className="titulo-seccao">Os teus veículos</h2>
+            <h2 className="titulo-seccao">{t('Os teus veículos', 'Your vehicles')}</h2>
             <div className="lista">
               {veiculos.map(v => editar !== 'novo' && editar?.id === v.veiculo.id
                 ? <FormVeiculo key={v.veiculo.id} inicial={v.veiculo} aoGuardar={guardado} aoCancelar={() => setEditar(null)} />
@@ -96,8 +97,8 @@ export function CarroPagina() {
 
       {veiculos.length === 0 && !editar && (
         <p className="vazio">
-          Com a data da primeira matrícula (está no documento único do automóvel), a plataforma calcula
-          a data da próxima inspeção e do IUC, e mostra onde o combustível está mais barato no teu concelho.
+          {t('Com a data da primeira matrícula (está no documento único do automóvel), a plataforma calcula a data da próxima inspeção e do IUC, e mostra onde o combustível está mais barato no teu concelho.',
+            'With the first registration date (on the vehicle registration document), the platform works out your next inspection and road-tax dates, and shows where fuel is cheapest in your municipality.')}
         </p>
       )}
     </>
@@ -110,27 +111,27 @@ function LinhaPrazo({ prazo: p, concelho }: { prazo: PrazoVeiculo; concelho: str
     <li className={p.diasEmFalta <= 30 ? 'urgente' : ''}>
       <div className="data-bloco">
         <strong>{d.getDate()}</strong>
-        <span>{d.toLocaleDateString('pt-PT', { month: 'short' }).replace('.', '')}</span>
+        <span>{d.toLocaleDateString(localeDatas(), { month: 'short' }).replace('.', '')}</span>
       </div>
       <div className="prazo-corpo">
         <div className="prazo-titulo">
           <Icone nome={iconesPrazo[p.tipo]} tamanho={16} />
           <strong>{p.titulo}</strong>
-          <span className="etiqueta">{nomesPrazo[p.tipo]}</span>
+          <span className="etiqueta">{nomesPrazo()[p.tipo]}</span>
         </div>
         <p className="suave pequeno">{p.descricao}</p>
         <p className="pequeno ligacoes">
-          {p.link && <a href={p.link} target="_blank" rel="noreferrer">Mais informação <Icone nome="externo" tamanho={12} /></a>}
+          {p.link && <a href={p.link} target="_blank" rel="noreferrer">{t('Mais informação', 'More information')} <Icone nome="externo" tamanho={12} /></a>}
           {p.tipo === 'Inspecao' && (
             <a href={`https://www.google.com/maps/search/${encodeURIComponent(`centro de inspeção automóvel ${concelho ?? ''}`)}`} target="_blank" rel="noreferrer">
-              Centros de inspeção perto de ti <Icone nome="externo" tamanho={12} />
+              {t('Centros de inspeção perto de ti', 'Inspection centres near you')} <Icone nome="externo" tamanho={12} />
             </a>
           )}
         </p>
       </div>
       <div className="dias">
         <strong>{p.diasEmFalta}</strong>
-        <span>{p.diasEmFalta === 1 ? 'dia' : 'dias'}</span>
+        <span>{p.diasEmFalta === 1 ? t('dia', 'day') : t('dias', 'days')}</span>
       </div>
     </li>
   )
@@ -142,7 +143,7 @@ function CartaoVeiculo({ dados, aoEditar, aoMudar }: { dados: VeiculoCompleto; a
   const unidade = v.combustivel === 'Eletrico' ? 'kWh' : 'L'
 
   const apagar = async () => {
-    if (!confirm(`Apagar ${v.nome}? Os prazos e os abastecimentos deste veículo deixam de aparecer.`)) return
+    if (!confirm(t(`Apagar ${v.nome}? Os prazos e os abastecimentos deste veículo deixam de aparecer.`, `Delete ${v.nome}? This vehicle's deadlines and refuels will no longer appear.`))) return
     await api.apagarVeiculo(v.id)
     aoMudar()
   }
@@ -153,61 +154,61 @@ function CartaoVeiculo({ dados, aoEditar, aoMudar }: { dados: VeiculoCompleto; a
         <div>
           <h3>{v.nome} {v.matricula && <span className="matricula">{v.matricula}</span>}</h3>
           <p className="suave pequeno">
-            {nomesCombustivel[v.combustivel]} · 1.ª matrícula {dataCurta(v.dataPrimeiraMatricula)}
+            {nomesCombustivel[v.combustivel]} · {t('1.ª matrícula', 'first registered')} {dataCurta(v.dataPrimeiraMatricula)}
             {v.cilindrada ? ` · ${v.cilindrada} cm³` : ''}{v.emissoesCo2 ? ` · ${v.emissoesCo2} g/km CO₂` : ''}
           </p>
         </div>
         <div className="botoes">
-          <button className="ligacao" aria-label={`Editar ${v.nome}`} onClick={aoEditar}><Icone nome="lapis" tamanho={16} /> Editar</button>
-          <button className="icone-botao" title="Apagar" aria-label={`Apagar ${v.nome}`} onClick={apagar}><Icone nome="lixo" tamanho={18} /></button>
+          <button className="ligacao" aria-label={`${t('Editar', 'Edit')} ${v.nome}`} onClick={aoEditar}><Icone nome="lapis" tamanho={16} /> {t('Editar', 'Edit')}</button>
+          <button className="icone-botao" title={t('Apagar', 'Delete')} aria-label={`${t('Apagar', 'Delete')} ${v.nome}`} onClick={apagar}><Icone nome="lixo" tamanho={18} /></button>
         </div>
       </div>
 
       <div className="veiculo-blocos">
         <div>
-          <span className="suave pequeno">IUC estimado por ano</span>
+          <span className="suave pequeno">{t('IUC estimado por ano', 'Estimated road tax (IUC) a year')}</span>
           {iuc.valor !== null ? <strong>{euros(iuc.valor)}</strong>
-            : iuc.emFalta.length > 0 ? <p className="pequeno">Falta: {iuc.emFalta.join(' e ')}. <button className="ligacao pequeno" onClick={aoEditar}>Indicar</button></p>
+            : iuc.emFalta.length > 0 ? <p className="pequeno">{t('Falta:', 'Missing:')} {iuc.emFalta.join(t(' e ', ' and '))}. <button className="ligacao pequeno" onClick={aoEditar}>{t('Indicar', 'Add')}</button></p>
             : <p className="pequeno">{iuc.aviso}</p>}
-          <Explicacao titulo="Como é calculado?">
+          <Explicacao titulo={t('Como é calculado?', 'How is it calculated?')}>
             {iuc.detalhe.length > 0 && <ul>{iuc.detalhe.map(d => <li key={d}>{d}</li>)}</ul>}
             <p>
-              Carros matriculados desde julho de 2007 (categoria B) pagam pela cilindrada e pelas emissões de CO₂, vezes um coeficiente do ano;
-              os a gasóleo pagam um adicional. Os anteriores (categoria A) pagam pela cilindrada e pela idade. Os 100% elétricos estão isentos.
+              {t('Carros matriculados desde julho de 2007 (categoria B) pagam pela cilindrada e pelas emissões de CO₂, vezes um coeficiente do ano; os a gasóleo pagam um adicional. Os anteriores (categoria A) pagam pela cilindrada e pela idade. Os 100% elétricos estão isentos.',
+                'Cars registered since July 2007 (category B) pay by engine size and CO₂ emissions, times a year coefficient; diesel cars pay a surcharge. Older cars (category A) pay by engine size and age. Fully electric cars are exempt.')}
             </p>
             <p>
-              A cilindrada e o CO₂ estão no certificado de matrícula (campos P.1 e V.7). Taxas de 2024 a 2026, que o Orçamento de 2026 não alterou.
-              É uma estimativa: o valor oficial aparece no <a href="https://www.portaldasfinancas.gov.pt/pt/menu.action?pai=5225" target="_blank" rel="noreferrer">Portal das Finanças</a>.
+              {t('A cilindrada e o CO₂ estão no certificado de matrícula (campos P.1 e V.7). Taxas de 2024 a 2026, que o Orçamento de 2026 não alterou. É uma estimativa: o valor oficial aparece no',
+                'Engine size and CO₂ are on the registration certificate (fields P.1 and V.7). Rates for 2024 to 2026, unchanged by the 2026 Budget. This is an estimate: the official amount is on')} <a href="https://www.portaldasfinancas.gov.pt/pt/menu.action?pai=5225" target="_blank" rel="noreferrer">Portal das Finanças</a>.
             </p>
             {iuc.aviso && iuc.valor !== null && <p>{iuc.aviso}</p>}
           </Explicacao>
         </div>
 
         <div>
-          <span className="suave pequeno">Seguro</span>
+          <span className="suave pequeno">{t('Seguro', 'Insurance')}</span>
           {v.seguradora || v.valorSeguroAnual ? (
             <p className="pequeno">
-              <strong>{v.seguradora ?? 'Seguradora por indicar'}</strong>
-              {v.valorSeguroAnual ? ` · ${euros(v.valorSeguroAnual)}/ano` : ''}
-              {v.renovacaoSeguro ? ` · renova a ${dataCurta(v.renovacaoSeguro).slice(0, 5)}` : ''}
-              {v.apoliceSeguro ? <><br /><span className="suave">Apólice {v.apoliceSeguro}</span></> : null}
+              <strong>{v.seguradora ?? t('Seguradora por indicar', 'Insurer not set')}</strong>
+              {v.valorSeguroAnual ? ` · ${euros(v.valorSeguroAnual)}${t('/ano', '/year')}` : ''}
+              {v.renovacaoSeguro ? ` · ${t('renova a', 'renews on')} ${dataCurta(v.renovacaoSeguro).slice(0, 6)}` : ''}
+              {v.apoliceSeguro ? <><br /><span className="suave">{t('Apólice', 'Policy')} {v.apoliceSeguro}</span></> : null}
             </p>
-          ) : <p className="pequeno"><button className="ligacao pequeno" onClick={aoEditar}>Indicar o seguro</button> para teres a renovação nos prazos.</p>}
+          ) : <p className="pequeno"><button className="ligacao pequeno" onClick={aoEditar}>{t('Indicar o seguro', 'Add the insurance')}</button> {t('para teres a renovação nos prazos.', 'to see the renewal in your deadlines.')}</p>}
         </div>
 
         <div>
-          <span className="suave pequeno">Consumo real</span>
+          <span className="suave pequeno">{t('Consumo real', 'Real consumption')}</span>
           {consumo.consumoReal !== null ? (
             <p className="pequeno">
               <strong>{num(consumo.consumoReal, 1)} {unidade}/100 km</strong>
               {consumo.custoPorKm !== null && ` · ${num(consumo.custoPorKm, 3)} €/km`}
-              {consumo.gastoMensal !== null && <><br />{euros(consumo.gastoMensal)} por mês em média</>}
+              {consumo.gastoMensal !== null && <><br />{euros(consumo.gastoMensal)} {t('por mês em média', 'a month on average')}</>}
             </p>
-          ) : <p className="pequeno suave">Regista dois depósitos cheios para calcular.</p>}
-          <Explicacao titulo="Como se calcula?">
+          ) : <p className="pequeno suave">{t('Regista dois depósitos cheios para calcular.', 'Log two full tanks to calculate it.')}</p>}
+          <Explicacao titulo={t('Como se calcula?', 'How is it calculated?')}>
             <p>
-              Enche o depósito e regista o abastecimento com os quilómetros do conta-quilómetros. No depósito cheio seguinte,
-              os litros postos são os que gastaste nesses quilómetros. Abastecimentos parciais pelo meio também contam.
+              {t('Enche o depósito e regista o abastecimento com os quilómetros do conta-quilómetros. No depósito cheio seguinte, os litros postos são os que gastaste nesses quilómetros. Abastecimentos parciais pelo meio também contam.',
+                'Fill the tank and log the refuel with the odometer reading. At the next full tank, the litres you put in are what you used over those kilometres. Partial refuels in between count too.')}
             </p>
           </Explicacao>
         </div>
@@ -215,21 +216,21 @@ function CartaoVeiculo({ dados, aoEditar, aoMudar }: { dados: VeiculoCompleto; a
 
       <div className="abastecimentos">
         <div className="pesquisa-topo">
-          <strong className="pequeno">Abastecimentos {consumo.abastecimentos > 0 && <span className="suave">({consumo.abastecimentos})</span>}</strong>
-          {!abastecer && <button className="ligacao pequeno" onClick={() => setAbastecer(true)}><Icone nome="mais" tamanho={14} /> Registar</button>}
+          <strong className="pequeno">{t('Abastecimentos', 'Refuels')} {consumo.abastecimentos > 0 && <span className="suave">({consumo.abastecimentos})</span>}</strong>
+          {!abastecer && <button className="ligacao pequeno" onClick={() => setAbastecer(true)}><Icone nome="mais" tamanho={14} /> {t('Registar', 'Log')}</button>}
         </div>
         {abastecer && <FormAbastecimento veiculoId={v.id} unidade={unidade} aoGuardar={() => { setAbastecer(false); aoMudar() }} aoCancelar={() => setAbastecer(false)} />}
         {dados.abastecimentos.length > 0 && (
           <table className="pequeno">
-            <thead><tr><th>Data</th><th className="num">km</th><th className="num">{unidade}</th><th className="num">Valor</th><th /></tr></thead>
+            <thead><tr><th>{t('Data', 'Date')}</th><th className="num">km</th><th className="num">{unidade}</th><th className="num">{t('Valor', 'Amount')}</th><th /></tr></thead>
             <tbody>
               {dados.abastecimentos.map(a => (
                 <tr key={a.id}>
-                  <td>{dataCurta(a.data)}{!a.depositoCheio && <span className="suave"> (parcial)</span>}</td>
+                  <td>{dataCurta(a.data)}{!a.depositoCheio && <span className="suave"> {t('(parcial)', '(partial)')}</span>}</td>
                   <td className="num">{a.quilometros.toLocaleString('pt-PT')}</td>
                   <td className="num">{num(a.litros)}</td>
                   <td className="num">{euros(a.valorTotal)}</td>
-                  <td><button className="icone-botao" aria-label="Apagar abastecimento" onClick={async () => { await api.apagarAbastecimento(a.id); aoMudar() }}><Icone nome="lixo" tamanho={14} /></button></td>
+                  <td><button className="icone-botao" aria-label={t('Apagar abastecimento', 'Delete refuel')} onClick={async () => { await api.apagarAbastecimento(a.id); aoMudar() }}><Icone nome="lixo" tamanho={14} /></button></td>
                 </tr>
               ))}
             </tbody>
@@ -258,19 +259,19 @@ function FormAbastecimento({ veiculoId, unidade, aoGuardar, aoCancelar }: { veic
   return (
     <form className="formulario-linha" onSubmit={submeter}>
       <div className="campos">
-        <label>Data<input type="date" required max={hojeIso()} value={a.data} onChange={e => setA({ ...a, data: e.target.value })} /></label>
-        <label>Quilómetros<input type="number" required min={0} value={a.quilometros || ''} onChange={e => setA({ ...a, quilometros: n(e.target.value) })} /></label>
-        <label>{unidade === 'kWh' ? 'kWh' : 'Litros'}<input type="number" required min={0} step="any" value={a.litros || ''} onChange={e => setA({ ...a, litros: n(e.target.value) })} /></label>
-        <label>Valor pago (€)<input type="number" required min={0} step="any" value={a.valorTotal || ''} onChange={e => setA({ ...a, valorTotal: n(e.target.value) })} /></label>
-        <label>Posto (opcional)<input value={a.posto ?? ''} onChange={e => setA({ ...a, posto: e.target.value || null })} /></label>
+        <label>{t('Data', 'Date')}<input type="date" required max={hojeIso()} value={a.data} onChange={e => setA({ ...a, data: e.target.value })} /></label>
+        <label>{t('Quilómetros', 'Kilometres')}<input type="number" required min={0} value={a.quilometros || ''} onChange={e => setA({ ...a, quilometros: n(e.target.value) })} /></label>
+        <label>{unidade === 'kWh' ? 'kWh' : t('Litros', 'Litres')}<input type="number" required min={0} step="any" value={a.litros || ''} onChange={e => setA({ ...a, litros: n(e.target.value) })} /></label>
+        <label>{t('Valor pago (€)', 'Amount paid (€)')}<input type="number" required min={0} step="any" value={a.valorTotal || ''} onChange={e => setA({ ...a, valorTotal: n(e.target.value) })} /></label>
+        <label>{t('Posto (opcional)', 'Station (optional)')}<input value={a.posto ?? ''} onChange={e => setA({ ...a, posto: e.target.value || null })} /></label>
       </div>
       <label className="linha pequeno">
-        <input type="checkbox" checked={a.depositoCheio} onChange={e => setA({ ...a, depositoCheio: e.target.checked })} /> Enchi o depósito
+        <input type="checkbox" checked={a.depositoCheio} onChange={e => setA({ ...a, depositoCheio: e.target.checked })} /> {t('Enchi o depósito', 'I filled the tank')}
       </label>
       {erro && <p className="erro">{erro}</p>}
       <div className="acoes">
-        <button type="submit">Guardar</button>
-        <button type="button" className="ligacao" onClick={aoCancelar}>Cancelar</button>
+        <button type="submit">{t('Guardar', 'Save')}</button>
+        <button type="button" className="ligacao" onClick={aoCancelar}>{t('Cancelar', 'Cancel')}</button>
       </div>
     </form>
   )
@@ -289,27 +290,26 @@ function CartaConducao({ validade, prazo, aoMudar }: { validade: string | null; 
 
   return (
     <>
-      <h2 className="titulo-seccao">Carta de condução</h2>
+      <h2 className="titulo-seccao">{t('Carta de condução', 'Driving licence')}</h2>
       <form className="cartao formulario-linha" onSubmit={guardar}>
-        <label>Válida até (campo 4b da carta)
+        <label>{t('Válida até (campo 4b da carta)', 'Valid until (field 4b of the licence)')}
           <input type="date" value={data} onChange={e => { setData(e.target.value); setGuardado(false) }} />
         </label>
         {prazo && (
           <p className="pequeno">
-            {validade ? 'Revalidação' : 'Revalidação provável'}: <strong>{dataCurta(prazo.data)}</strong>
-            {prazo.diasEmFalta >= 0 ? ` (daqui a ${prazo.diasEmFalta} dias)` : ' (já passou: confirma a validade)'}
+            {validade ? t('Revalidação', 'Renewal') : t('Revalidação provável', 'Likely renewal')}: <strong>{dataCurta(prazo.data)}</strong>
+            {prazo.diasEmFalta >= 0 ? t(` (daqui a ${prazo.diasEmFalta} dias)`, ` (in ${prazo.diasEmFalta} days)`) : t(' (já passou: confirma a validade)', ' (already passed: check the expiry date)')}
           </p>
         )}
         <Explicacao>
           <p>
-            A carta de condução de ligeiros (grupo 1) revalida-se aos 30, 40, 50, 60, 65 e 70 anos e depois de dois em dois anos;
-            a partir dos 60 é preciso atestado médico. Podes pedir a revalidação até 6 meses antes, no IMT Online.
-            Sem a data da carta, o portal estima-a pela tua data de nascimento.
+            {t('A carta de condução de ligeiros (grupo 1) revalida-se aos 30, 40, 50, 60, 65 e 70 anos e depois de dois em dois anos; a partir dos 60 é preciso atestado médico. Podes pedir a revalidação até 6 meses antes, no IMT Online. Sem a data da carta, o portal estima-a pela tua data de nascimento.',
+              'A car driving licence (group 1) is renewed at 30, 40, 50, 60, 65 and 70, then every two years; from 60 a medical certificate is required. You can apply up to 6 months early at IMT Online. Without the licence date, the portal estimates it from your date of birth.')}
           </p>
         </Explicacao>
         <div className="acoes">
-          <button type="submit">Guardar</button>
-          {guardado && <span className="pequeno" role="status">Guardado.</span>}
+          <button type="submit">{t('Guardar', 'Save')}</button>
+          {guardado && <span className="pequeno" role="status">{t('Guardado.', 'Saved.')}</span>}
         </div>
       </form>
     </>
@@ -362,44 +362,44 @@ function Combustiveis({ concelhoPerfil, freguesiaPerfil, inicial, consumo }: {
 
   return (
     <div className="cartao combustiveis">
-      <h2><Icone nome="lupa" tamanho={18} /> {combustivel === 'Eletrico' ? 'Carregar' : 'Abastecer'} em {localidadeEfetiva ?? concelho ?? '—'}</h2>
+      <h2><Icone nome="lupa" tamanho={18} /> {combustivel === 'Eletrico' ? t('Carregar', 'Charge') : t('Abastecer', 'Refuel')} {t('em', 'in')} {localidadeEfetiva ?? concelho ?? '—'}</h2>
       <div className="campos">
-        <label>Concelho
-          <input list="concelhos-dgeg" value={escrito ?? concelho ?? ''} placeholder="Escreve o concelho" onChange={e => escrever(e.target.value)} />
+        <label>{t('Concelho', 'Municipality')}
+          <input list="concelhos-dgeg" value={escrito ?? concelho ?? ''} placeholder={t('Escreve o concelho', 'Type the municipality')} onChange={e => escrever(e.target.value)} />
           <datalist id="concelhos-dgeg">{concelhos.map(c => <option key={c} value={c} />)}</datalist>
         </label>
         {combustivel !== 'Eletrico' && lista.length > 1 && (
-          <label>Freguesia / localidade
+          <label>{t('Freguesia / localidade', 'Parish / locality')}
             <select value={localidadeEfetiva ?? ''} onChange={e => setLocalidade(e.target.value || null)}>
-              <option value="">Todo o concelho</option>
+              <option value="">{t('Todo o concelho', 'Whole municipality')}</option>
               {lista.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </label>
         )}
-        <label>Combustível
+        <label>{t('Combustível', 'Fuel')}
           <select value={combustivel} onChange={e => setCombustivel(e.target.value as Combustivel)}>
-            {Object.entries(nomesCombustivel).map(([k, v]) => <option key={k} value={k}>{k === 'Eletrico' ? 'Elétrico (carregamento)' : v}</option>)}
+            {Object.entries(nomesCombustivel).map(([k, v]) => <option key={k} value={k}>{k === 'Eletrico' ? t('Elétrico (carregamento)', 'Electric (charging)') : v}</option>)}
           </select>
         </label>
       </div>
       {concelhoPerfil && concelho !== concelhoPerfil && (
-        <p className="pequeno"><button className="ligacao pequeno" onClick={() => { setEscolhido(null); setEscrito(null); setLocalidade(undefined) }}>Voltar a {concelhoPerfil}</button></p>
+        <p className="pequeno"><button className="ligacao pequeno" onClick={() => { setEscolhido(null); setEscrito(null); setLocalidade(undefined) }}>{t('Voltar a', 'Back to')} {concelhoPerfil}</button></p>
       )}
-      {!concelho && <p className="aviso pequeno">Escolhe um concelho, ou indica o teu no <a href="#/perfil">perfil</a>.</p>}
+      {!concelho && <p className="aviso pequeno">{t('Escolhe um concelho, ou indica o teu no', 'Choose a municipality, or add yours to your')} <a href="#/perfil">{t('perfil', 'profile')}</a>.</p>}
 
       {combustivel === 'Eletrico' ? (concelho && <Carregamento concelho={concelho} />) : (
         <>
-          {precos === undefined && concelho && <p className="suave">A consultar a DGEG…</p>}
-          {precos === null && concelho && <p className="suave">Sem postos com este combustível {localidadeEfetiva ? `em ${localidadeEfetiva}` : 'no concelho'}.</p>}
+          {precos === undefined && concelho && <p className="suave">{t('A consultar a DGEG…', 'Checking DGEG…')}</p>}
+          {precos === null && concelho && <p className="suave">{t('Sem postos com este combustível', 'No stations with this fuel')} {localidadeEfetiva ? `${t('em', 'in')} ${localidadeEfetiva}` : t('no concelho', 'in the municipality')}.</p>}
           {precos && (
             <>
               <div className="indicadores">
-                <div className="indicador tom-positivo"><strong>{precos.minimo.toFixed(3).replace('.', ',')} €</strong><span>mais barato</span></div>
-                <div className="indicador"><strong>{precos.media.toFixed(3).replace('.', ',')} €</strong><span>média de {precos.numeroPostos} postos</span></div>
+                <div className="indicador tom-positivo"><strong>{precos.minimo.toFixed(3).replace('.', ',')} €</strong><span>{t('mais barato', 'cheapest')}</span></div>
+                <div className="indicador"><strong>{precos.media.toFixed(3).replace('.', ',')} €</strong><span>{t(`média de ${precos.numeroPostos} postos`, `average of ${precos.numeroPostos} stations`)}</span></div>
               </div>
               <p className="pequeno">
-                Encher 50 L no mais barato poupa <strong>{poupancaDeposito.toFixed(2).replace('.', ',')} €</strong> face à média.
-                {consumo ? ` Com ${consumo} L/100 km, são cerca de ${((precos.media - precos.minimo) * consumo * 150).toFixed(0)} € por ano (15 000 km).` : ''}
+                {t('Encher 50 L no mais barato poupa', 'Filling 50 L at the cheapest saves')} <strong>{poupancaDeposito.toFixed(2).replace('.', ',')} €</strong> {t('face à média.', 'compared with the average.')}
+                {consumo ? t(` Com ${consumo} L/100 km, são cerca de ${((precos.media - precos.minimo) * consumo * 150).toFixed(0)} € por ano (15 000 km).`, ` At ${consumo} L/100 km, that is about ${((precos.media - precos.minimo) * consumo * 150).toFixed(0)} € a year (15,000 km).`) : ''}
               </p>
               <ol className="postos">
                 {precos.maisBaratos.map((p, i) => (
@@ -412,7 +412,7 @@ function Combustiveis({ concelhoPerfil, freguesiaPerfil, inicial, consumo }: {
                       <strong>{p.preco.toFixed(3).replace('.', ',')} €</strong>
                       {p.latitude && p.longitude && (
                         <a className="pequeno" href={`https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`} target="_blank" rel="noreferrer">
-                          Mapa <Icone nome="externo" tamanho={12} />
+                          {t('Mapa', 'Map')} <Icone nome="externo" tamanho={12} />
                         </a>
                       )}
                     </div>
@@ -420,7 +420,7 @@ function Combustiveis({ concelhoPerfil, freguesiaPerfil, inicial, consumo }: {
                 ))}
               </ol>
               <p className="suave pequeno">
-                Fonte: DGEG, preços comunicados pelos postos. A localidade é a que cada posto indica à DGEG; normalmente coincide com a freguesia ou a vila.
+                {t('Fonte: DGEG, preços comunicados pelos postos. A localidade é a que cada posto indica à DGEG; normalmente coincide com a freguesia ou a vila.', 'Source: DGEG, prices reported by the stations. The locality is the one each station gives DGEG; it usually matches the parish or town.')}
               </p>
             </>
           )}
@@ -436,12 +436,12 @@ function Carregamento({ concelho }: { concelho: string }) {
   useEffect(() => { api.carregamento(concelho).then(dados => setResposta({ concelho, dados })) }, [concelho])
 
   const dados = resposta?.concelho === concelho ? resposta.dados : undefined
-  if (dados === undefined) return <p className="suave">A consultar a Mobi.E (o ficheiro de tarifas é grande; a primeira vez demora)…</p>
-  if (dados === null) return <p className="suave">Sem postos Mobi.E conhecidos neste concelho.</p>
+  if (dados === undefined) return <p className="suave">{t('A consultar a Mobi.E (o ficheiro de tarifas é grande; a primeira vez demora)…', 'Checking Mobi.E (the tariff file is large; the first time takes a while)…')}</p>
+  if (dados === null) return <p className="suave">{t('Sem postos Mobi.E conhecidos neste concelho.', 'No known Mobi.E chargers in this municipality.')}</p>
 
   return (
     <>
-      <p className="pequeno">{dados.numeroPostos} postos Mobi.E. Os mais baratos para carregar {dados.energia} kWh, pela tarifa do operador do posto:</p>
+      <p className="pequeno">{t(`${dados.numeroPostos} postos Mobi.E. Os mais baratos para carregar ${dados.energia} kWh, pela tarifa do operador do posto:`, `${dados.numeroPostos} Mobi.E chargers. The cheapest to charge ${dados.energia} kWh, by the charge-point operator's tariff:`)}</p>
       <ol className="postos">
         {dados.maisBaratos.map(p => (
           <li key={p.id}>
@@ -452,18 +452,18 @@ function Carregamento({ concelho }: { concelho: string }) {
             <div className="posto-preco">
               <strong>{euros(p.custoOperador)}</strong>
               <a className="pequeno" href={`https://www.google.com/maps/search/${encodeURIComponent(`${p.morada}, ${dados.concelho}`)}`} target="_blank" rel="noreferrer">
-                Mapa <Icone nome="externo" tamanho={12} />
+                {t('Mapa', 'Map')} <Icone nome="externo" tamanho={12} />
               </a>
             </div>
           </li>
         ))}
       </ol>
-      <Explicacao titulo="Porque é que este não é o preço final?">
+      <Explicacao titulo={t('Porque é que este não é o preço final?', 'Why is this not the final price?')}>
         <p>
-          Na rede Mobi.E pagas duas coisas: a tarifa do operador do posto (OPC), que é a que aparece aqui, e a energia ao teu comercializador
-          (CEME, a empresa do teu cartão ou app de carregamento), mais impostos. A parte da energia depende do teu contrato, por isso não entra na comparação.
+          {t('Na rede Mobi.E pagas duas coisas: a tarifa do operador do posto (OPC), que é a que aparece aqui, e a energia ao teu comercializador (CEME, a empresa do teu cartão ou app de carregamento), mais impostos. A parte da energia depende do teu contrato, por isso não entra na comparação.',
+            'On the Mobi.E network you pay two things: the charge-point operator tariff (OPC), shown here, and the energy to your supplier (CEME, the company behind your card or charging app), plus taxes. The energy part depends on your contract, so it is not in the comparison.')}
         </p>
-        <p>O tempo de carregamento é estimado pela potência da tomada (até 50 kW). Fonte: ficheiro público de tarifas da Mobi.E, atualizado pelos operadores.</p>
+        <p>{t('O tempo de carregamento é estimado pela potência da tomada (até 50 kW). Fonte: ficheiro público de tarifas da Mobi.E, atualizado pelos operadores.', 'Charging time is estimated from the socket power (up to 50 kW). Source: the public Mobi.E tariff file, updated by the operators.')}</p>
       </Explicacao>
     </>
   )
@@ -495,72 +495,72 @@ function FormVeiculo({ inicial, aoGuardar, aoCancelar }: { inicial: Veiculo | nu
 
   return (
     <form ref={formulario} className="cartao formulario-linha" onSubmit={submeter}>
-      <h2><Icone nome={inicial ? 'lapis' : 'mais'} tamanho={18} /> {inicial ? `Editar ${inicial.nome}` : 'Novo veículo'}</h2>
+      <h2><Icone nome={inicial ? 'lapis' : 'mais'} tamanho={18} /> {inicial ? `${t('Editar', 'Edit')} ${inicial.nome}` : t('Novo veículo', 'New vehicle')}</h2>
       <div className="campos">
-        <label>Nome
-          <input required placeholder="ex.: Clio" value={v.nome} onChange={e => setV({ ...v, nome: e.target.value })} />
+        <label>{t('Nome', 'Name')}
+          <input required placeholder={t('ex.: Clio', 'e.g. Clio')} value={v.nome} onChange={e => setV({ ...v, nome: e.target.value })} />
         </label>
-        <label>Matrícula (opcional)
+        <label>{t('Matrícula (opcional)', 'Plate (optional)')}
           <input placeholder="AA-00-BB" value={v.matricula ?? ''} onChange={e => setV({ ...v, matricula: e.target.value || null })} />
         </label>
-        <label>Data da 1.ª matrícula
+        <label>{t('Data da 1.ª matrícula', 'First registration date')}
           <input type="date" required value={v.dataPrimeiraMatricula} onChange={e => setV({ ...v, dataPrimeiraMatricula: e.target.value })} />
         </label>
-        <label>Tipo
+        <label>{t('Tipo', 'Type')}
           <select value={v.categoria} onChange={e => setV({ ...v, categoria: e.target.value as DadosVeiculo['categoria'] })}>
-            <option value="LigeiroPassageiros">Ligeiro de passageiros</option>
-            <option value="LigeiroMercadorias">Ligeiro de mercadorias</option>
+            <option value="LigeiroPassageiros">{t('Ligeiro de passageiros', 'Passenger car')}</option>
+            <option value="LigeiroMercadorias">{t('Ligeiro de mercadorias', 'Light goods vehicle')}</option>
           </select>
         </label>
-        <label>Combustível
+        <label>{t('Combustível', 'Fuel')}
           <select value={v.combustivel} onChange={e => setV({ ...v, combustivel: e.target.value as Combustivel })}>
             {Object.entries(nomesCombustivel).map(([k, n]) => <option key={k} value={k}>{n}</option>)}
           </select>
         </label>
-        <label>Consumo médio (L/100 km)
+        <label>{t('Consumo médio (L/100 km)', 'Average consumption (L/100 km)')}
           <input type="number" min={0} step={0.1} value={v.consumoLitros100Km ?? ''} onChange={e => setV({ ...v, consumoLitros100Km: decimal(e.target.value) })} />
         </label>
       </div>
 
-      <h3 className="pequeno">Para estimar o IUC <span className="suave">(certificado de matrícula)</span></h3>
+      <h3 className="pequeno">{t('Para estimar o IUC', 'To estimate road tax (IUC)')} <span className="suave">{t('(certificado de matrícula)', '(registration certificate)')}</span></h3>
       <div className="campos">
-        <label>Cilindrada (cm³, campo P.1)
+        <label>{t('Cilindrada (cm³, campo P.1)', 'Engine size (cm³, field P.1)')}
           <input type="number" min={0} max={10000} value={v.cilindrada ?? ''} onChange={e => setV({ ...v, cilindrada: inteiro(e.target.value) })} />
         </label>
-        <label>CO₂ (g/km, campo V.7)
+        <label>{t('CO₂ (g/km, campo V.7)', 'CO₂ (g/km, field V.7)')}
           <input type="number" min={0} max={1000} value={v.emissoesCo2 ?? ''} onChange={e => setV({ ...v, emissoesCo2: inteiro(e.target.value) })} />
         </label>
-        <label>Norma do CO₂
+        <label>{t('Norma do CO₂', 'CO₂ standard')}
           <select value={v.normaCo2 ?? ''} onChange={e => setV({ ...v, normaCo2: (e.target.value || null) as DadosVeiculo['normaCo2'] })}>
-            <option value="">Não sei (o portal deduz pela data)</option>
-            <option value="Wltp">WLTP (carros mais recentes)</option>
+            <option value="">{t('Não sei (o portal deduz pela data)', 'Not sure (the portal works it out from the date)')}</option>
+            <option value="Wltp">{t('WLTP (carros mais recentes)', 'WLTP (newer cars)')}</option>
             <option value="Nedc">NEDC</option>
           </select>
         </label>
       </div>
 
-      <h3 className="pequeno">Seguro e revisão</h3>
+      <h3 className="pequeno">{t('Seguro e revisão', 'Insurance and service')}</h3>
       <div className="campos">
-        <label>Seguradora
+        <label>{t('Seguradora', 'Insurer')}
           <input value={v.seguradora ?? ''} onChange={e => setV({ ...v, seguradora: e.target.value || null })} />
         </label>
-        <label>N.º da apólice
+        <label>{t('N.º da apólice', 'Policy number')}
           <input value={v.apoliceSeguro ?? ''} onChange={e => setV({ ...v, apoliceSeguro: e.target.value || null })} />
         </label>
-        <label>Valor anual (€)
+        <label>{t('Valor anual (€)', 'Annual premium (€)')}
           <input type="number" min={0} step="any" value={v.valorSeguroAnual ?? ''} onChange={e => setV({ ...v, valorSeguroAnual: decimal(e.target.value) })} />
         </label>
-        <label>Renovação do seguro
+        <label>{t('Renovação do seguro', 'Insurance renewal')}
           <input type="date" value={v.renovacaoSeguro ?? ''} onChange={e => setV({ ...v, renovacaoSeguro: e.target.value || null })} />
         </label>
-        <label>Próxima revisão
+        <label>{t('Próxima revisão', 'Next service')}
           <input type="date" value={v.proximaRevisao ?? ''} onChange={e => setV({ ...v, proximaRevisao: e.target.value || null })} />
         </label>
       </div>
       {erro && <p className="erro">{erro}</p>}
       <div className="acoes">
-        <button type="submit">Guardar</button>
-        <button type="button" className="ligacao" onClick={aoCancelar}>Cancelar</button>
+        <button type="submit">{t('Guardar', 'Save')}</button>
+        <button type="button" className="ligacao" onClick={aoCancelar}>{t('Cancelar', 'Cancel')}</button>
       </div>
     </form>
   )

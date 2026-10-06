@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -40,7 +41,7 @@ public sealed class ServicoAssistente(IModeloLinguagem modelo, IEnumerable<IModu
         {
             var resposta = await modelo.ConversarAsync(mensagens, [.. ferramentas.Values], ct);
             if (resposta.Chamadas.Count == 0)
-                return new RespostaAssistente(string.IsNullOrWhiteSpace(resposta.Texto) ? "Não consegui formular uma resposta. Tenta perguntar de outra forma." : resposta.Texto.Trim(), consultas.Distinct().ToList());
+                return new RespostaAssistente(string.IsNullOrWhiteSpace(resposta.Texto) ? T("Não consegui formular uma resposta. Tenta perguntar de outra forma.", "I could not put together an answer. Try asking another way.") : resposta.Texto.Trim(), consultas.Distinct().ToList());
 
             mensagens.Add(new MensagemModelo(Papel.Assistente, resposta.Texto, resposta.Chamadas));
             foreach (var chamada in resposta.Chamadas)
@@ -52,7 +53,7 @@ public sealed class ServicoAssistente(IModeloLinguagem modelo, IEnumerable<IModu
             }
         }
 
-        return new RespostaAssistente("A pergunta precisou de demasiadas consultas. Tenta dividi-la em perguntas mais pequenas.", consultas.Distinct().ToList());
+        return new RespostaAssistente(T("A pergunta precisou de demasiadas consultas. Tenta dividi-la em perguntas mais pequenas.", "That question needed too many lookups. Try splitting it into smaller questions."), consultas.Distinct().ToList());
     }
 
     /// <summary>As ferramentas de todas as secções mais as gerais (perfil, secções, painel).</summary>
@@ -134,7 +135,7 @@ public sealed class ServicoAssistente(IModeloLinguagem modelo, IEnumerable<IModu
             {(nomeSeccao is null ? "" : $"A pessoa está agora na secção \"{nomeSeccao}\".")}
 
             Como responder:
-            - Em português de Portugal, de forma clara e curta. Usa listas quando ajudarem.
+            - {T("Em português de Portugal", "In English (the person chose English in the portal; some data from the lookups may be in Portuguese: translate what you quote, keep official names such as IRS Jovem)")}, de forma clara e curta. Usa listas quando ajudarem.
             - Qualquer número ou facto sobre a pessoa (apoios, prazos, impostos, veículos, investimentos, imóveis, perfil) tem de vir das consultas disponíveis.
               Nunca inventes valores. Se faltar informação, diz qual e onde se preenche no portal (normalmente no Perfil ou na secção respetiva).
             - Explica o porquê em termos simples: a regra, de onde vem o número, o que a pessoa pode fazer.
@@ -146,17 +147,17 @@ public sealed class ServicoAssistente(IModeloLinguagem modelo, IEnumerable<IModu
 
     private static string NomeConsulta(string ferramenta) => ferramenta switch
     {
-        "perfil" => "Perfil",
-        "seccoes_do_portal" => "Secções do portal",
-        "resumo_do_painel" => "Painel",
-        "apoios_elegiveis" => "Apoios",
-        "prazos_fiscais" => "Prazos fiscais",
-        "imoveis_seguidos" => "Imóveis seguidos",
-        "mediana_precos_casas" => "Preços das casas (INE)",
-        "veiculos_e_prazos" => "Veículos",
-        "preco_combustivel" => "Combustível (DGEG)",
-        "relatorio_irs_investimentos" => "Relatório de IRS",
-        "carteira_investimentos" => "Carteira",
+        "perfil" => T("Perfil", "Profile"),
+        "seccoes_do_portal" => T("Secções do portal", "Portal sections"),
+        "resumo_do_painel" => T("Painel", "Dashboard"),
+        "apoios_elegiveis" => T("Apoios", "Benefits"),
+        "prazos_fiscais" => T("Prazos fiscais", "Tax deadlines"),
+        "imoveis_seguidos" => T("Imóveis seguidos", "Followed listings"),
+        "mediana_precos_casas" => T("Preços das casas (INE)", "House prices (INE)"),
+        "veiculos_e_prazos" => T("Veículos", "Vehicles"),
+        "preco_combustivel" => T("Combustível (DGEG)", "Fuel (DGEG)"),
+        "relatorio_irs_investimentos" => T("Relatório de IRS", "IRS report"),
+        "carteira_investimentos" => T("Carteira", "Portfolio"),
         _ => ferramenta.Replace('_', ' '),
     };
 }

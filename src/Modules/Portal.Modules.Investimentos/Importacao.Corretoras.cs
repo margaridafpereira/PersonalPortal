@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,8 +13,11 @@ namespace Portal.Modules.Investimentos;
 /// </summary>
 public static partial class Importacao
 {
-    private const string AvisoLeitorPublico =
-        "Leitor da {0} feito a partir de ficheiros de exemplo públicos: confirma as primeiras operações com o extrato da corretora e avisa se algo não bater certo.";
+    private static string AvisoLeitorPublico => T(
+        "Leitor da {0} feito a partir de ficheiros de exemplo públicos: confirma as primeiras operações com o extrato da corretora e avisa se algo não bater certo.",
+        "The {0} reader was built from public sample files: check the first transactions against your broker statement and report anything that does not match.");
+
+    private static string FicheiroVazio => T("O ficheiro está vazio.", "The file is empty.");
 
     private static string? DetetarCorretora(string[] cabecalho, Dictionary<string, int> colunas)
     {
@@ -82,7 +86,7 @@ public static partial class Importacao
             var d = descricao.ToLowerInvariant();
             if (!TentarData($"{C(l, Data)} {C(l, Hora)}", out var momento) && !TentarData(C(l, Data), out momento))
             {
-                avisos.Add($"Linha {n}: data inválida \"{C(l, Data)}\"; linha ignorada.");
+                avisos.Add(DataInvalida(n, C(l, Data)));
                 continue;
             }
 
@@ -123,7 +127,7 @@ public static partial class Importacao
 
         operacoes.AddRange(dividendos.Operacoes("Degiro", avisos));
         if (ignoradas > 0)
-            avisos.Add($"Ignoradas {ignoradas} linha(s) que não são compras, vendas, custos nem dividendos (depósitos, câmbios, juros…).");
+            avisos.Add(T($"Ignoradas {ignoradas} linha(s) que não são compras, vendas, custos nem dividendos (depósitos, câmbios, juros…).", $"Skipped {ignoradas} line(s) that are not buys, sells, costs or dividends (deposits, FX, interest…)."));
         return new(operacoes, avisos);
     }
 
@@ -157,7 +161,7 @@ public static partial class Importacao
             }
             if (!TentarData(C("Date"), out var momento))
             {
-                avisos.Add($"Linha {n}: data inválida \"{C("Date")}\"; linha ignorada.");
+                avisos.Add(DataInvalida(n, C("Date")));
                 continue;
             }
 
@@ -176,11 +180,11 @@ public static partial class Importacao
                 operacoes.Add(op);
         }
 
-        avisos.AddRange(ignoradas.Where(kv => !kv.Key.Contains("SPLIT")).Select(kv => $"Ignoradas {kv.Value} linha(s) \"{kv.Key}\"."));
+        avisos.AddRange(ignoradas.Where(kv => !kv.Key.Contains("SPLIT")).Select(kv => Ignoradas(kv.Value, kv.Key)));
         if (desdobramentos > 0)
-            avisos.Add($"Há {desdobramentos} desdobramento(s) de ações (stock split) que o portal ainda não trata: o FIFO desses títulos pode ficar errado. Confirma as quantidades.");
+            avisos.Add(T($"Há {desdobramentos} desdobramento(s) de ações (stock split) que o portal ainda não trata: o FIFO desses títulos pode ficar errado. Confirma as quantidades.", $"There are {desdobramentos} stock split(s) the portal does not handle yet: FIFO for those holdings may be wrong. Check the quantities."));
         if (operacoes.Any(o => o.Tipo == TipoOperacao.Dividendo))
-            avisos.Add("Revolut: o extrato só traz o valor total de cada dividendo, que pode já vir sem a retenção na fonte. Confirma o bruto e o imposto retido no extrato de dividendos da Revolut.");
+            avisos.Add(T("Revolut: o extrato só traz o valor total de cada dividendo, que pode já vir sem a retenção na fonte. Confirma o bruto e o imposto retido no extrato de dividendos da Revolut.", "Revolut: the statement only gives each dividend's total, which may already be net of withholding. Check the gross amount and tax withheld in Revolut's dividend statement."));
         return new(operacoes, avisos);
     }
 
@@ -201,7 +205,7 @@ public static partial class Importacao
         var avisos = new List<string>
         {
             string.Format(AvisoLeitorPublico, "XTB"),
-            $"XTB: o ficheiro não diz a moeda da conta; os valores foram lidos em {moedaConta}. Se a tua conta XTB for noutra moeda, avisa.",
+            T($"XTB: o ficheiro não diz a moeda da conta; os valores foram lidos em {moedaConta}. Se a tua conta XTB for noutra moeda, avisa.", $"XTB: the file does not state the account currency; amounts were read as {moedaConta}. If your XTB account uses another currency, say so."),
         };
         var dividendos = new Dividendos();
         var ignoradas = new Dictionary<string, int>();
@@ -215,7 +219,7 @@ public static partial class Importacao
             if (!TentarData(C("Time"), out var momento))
             {
                 if (tipoTexto.Length > 0)
-                    avisos.Add($"Linha {n}: data inválida \"{C("Time")}\"; linha ignorada.");
+                    avisos.Add(DataInvalida(n, C("Time")));
                 continue;
             }
             var simbolo = C("Symbol").ToUpperInvariant();
@@ -229,7 +233,7 @@ public static partial class Importacao
             {
                 if (NegocioXtb.Match(C("Comment")) is not { Success: true } m || !TentarNumero(m.Groups["qtd"].Value, out var qtd) || qtd == 0)
                 {
-                    avisos.Add($"Linha {n}: não consegui ler a quantidade em \"{C("Comment")}\"; linha ignorada.");
+                    avisos.Add(T($"Linha {n}: não consegui ler a quantidade em \"{C("Comment")}\"; linha ignorada.", $"Line {n}: could not read the quantity in \"{C("Comment")}\"; line skipped."));
                     continue;
                 }
                 var op = new Operacao
@@ -247,7 +251,7 @@ public static partial class Importacao
         }
 
         operacoes.AddRange(dividendos.Operacoes("XTB", avisos));
-        avisos.AddRange(ignoradas.Select(kv => $"Ignoradas {kv.Value} linha(s) \"{kv.Key}\" (não são compras, vendas nem dividendos)."));
+        avisos.AddRange(ignoradas.Select(kv => Ignoradas(kv.Value, kv.Key, explicar: true)));
         return new(operacoes, avisos);
     }
 
@@ -265,7 +269,7 @@ public static partial class Importacao
         var avisos = new List<string>
         {
             string.Format(AvisoLeitorPublico, "eToro"),
-            "eToro: os valores estão na moeda da conta (USD), convertidos para euros ao câmbio do dia de cada operação.",
+            T("eToro: os valores estão na moeda da conta (USD), convertidos para euros ao câmbio do dia de cada operação.", "eToro: amounts are in the account currency (USD), converted to euros at each day's rate."),
         };
         var ignoradas = new Dictionary<string, int>();
         var outrosAtivos = 0;
@@ -292,7 +296,7 @@ public static partial class Importacao
             }
             if (!TentarData(C("Date"), out var momento))
             {
-                avisos.Add($"Linha {n}: data inválida \"{C("Date")}\"; linha ignorada.");
+                avisos.Add(DataInvalida(n, C("Date")));
                 continue;
             }
 
@@ -311,18 +315,18 @@ public static partial class Importacao
                 aceite = Aceitar(op, unidades, valor / Math.Abs(unidades), n, avisos);
             else
             {
-                avisos.Add($"Linha {n}: unidades \"{C("Units")}\" inválidas; linha ignorada.");
+                avisos.Add(T($"Linha {n}: unidades \"{C("Units")}\" inválidas; linha ignorada.", $"Line {n}: invalid units \"{C("Units")}\"; line skipped."));
                 aceite = false;
             }
             if (aceite)
                 operacoes.Add(op);
         }
 
-        avisos.AddRange(ignoradas.Select(kv => $"Ignoradas {kv.Value} linha(s) \"{kv.Key}\"."));
+        avisos.AddRange(ignoradas.Select(kv => Ignoradas(kv.Value, kv.Key)));
         if (outrosAtivos > 0)
-            avisos.Add($"Ignoradas {outrosAtivos} linha(s) de CFD ou cripto: têm regras fiscais próprias e não entram neste cálculo.");
+            avisos.Add(T($"Ignoradas {outrosAtivos} linha(s) de CFD ou cripto: têm regras fiscais próprias e não entram neste cálculo.", $"Skipped {outrosAtivos} CFD or crypto line(s): they have their own tax rules and are not part of this calculation."));
         if (operacoes.Any(o => o.Tipo == TipoOperacao.Dividendo))
-            avisos.Add("eToro: os dividendos no extrato podem já vir sem a retenção na fonte. Confirma o bruto e o imposto retido no separador de dividendos do extrato.");
+            avisos.Add(T("eToro: os dividendos no extrato podem já vir sem a retenção na fonte. Confirma o bruto e o imposto retido no separador de dividendos do extrato.", "eToro: dividends in the statement may already be net of withholding. Check the gross amount and tax withheld in the statement's dividends tab."));
         return new(operacoes, avisos);
     }
 
@@ -356,7 +360,7 @@ public static partial class Importacao
             }
             if (!TentarData(C("DateTime", "TradeDate", "Date/Time"), out var momento))
             {
-                avisos.Add($"Linha {n}: data inválida \"{C("DateTime", "TradeDate", "Date/Time")}\"; linha ignorada.");
+                avisos.Add(DataInvalida(n, C("DateTime", "TradeDate", "Date/Time")));
                 continue;
             }
 

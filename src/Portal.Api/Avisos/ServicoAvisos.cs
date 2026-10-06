@@ -83,6 +83,8 @@ public sealed class ServicoAvisos(PortalDbContext db, IEnumerable<IModulo> modul
     /// <summary>Envia o email desta pessoa. Devolve quantos prazos levou (0 = não havia nada para avisar, nada enviado).</summary>
     public async Task<int> EnviarParaAsync(string id, DateOnly hoje, DateTimeOffset agora, bool teste, CancellationToken ct)
     {
+        // Os emails são sempre em português, mesmo o de teste pedido com o portal em inglês (só vale dentro deste método).
+        Portal.Core.Idioma.Definir(false);
         var endereco = await db.Users.Where(u => u.Id == id).Select(u => u.Email).FirstOrDefaultAsync(ct);
         if (string.IsNullOrWhiteSpace(endereco))
             return 0;
@@ -241,12 +243,12 @@ public static class AvisosEndpoints
             {
                 var prazos = await avisos.EnviarParaAsync(id, DateOnly.FromDateTime(relogio.GetLocalNow().DateTime), relogio.GetUtcNow(), teste: true, ct);
                 return prazos == 0
-                    ? Results.Problem("A tua conta não tem email.", statusCode: 400)
-                    : Results.Ok(new { Mensagem = $"Email de teste {email.Destino}." });
+                    ? Results.Problem(Portal.Core.Idioma.T("A tua conta não tem email.", "Your account has no email address."), statusCode: 400)
+                    : Results.Ok(new { Mensagem = Portal.Core.Idioma.T($"Email de teste {email.Destino}.", $"Test email {email.Destino}.") });
             }
             catch (Exception e) when (e is System.Net.Mail.SmtpException or InvalidOperationException or IOException)
             {
-                return Results.Problem($"O email não foi enviado: {e.Message}", statusCode: 502);
+                return Results.Problem(Portal.Core.Idioma.T($"O email não foi enviado: {e.Message}", $"The email was not sent: {e.Message}"), statusCode: 502);
             }
         });
 

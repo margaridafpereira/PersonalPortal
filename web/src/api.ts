@@ -1,4 +1,5 @@
 // Cliente da API do portal. Autenticação por cookie de sessão (mesma origem via proxy do Vite).
+import { lingua, localeDatas, t } from './i18n'
 
 export type CategoriaRendimento = 'Nenhum' | 'TrabalhoDependente' | 'TrabalhoIndependente' | 'Ambos'
 export type SituacaoHabitacao = 'Arrenda' | 'Proprietario' | 'ProcuraArrendar' | 'ProcuraComprar' | 'CasaDeFamilia'
@@ -158,14 +159,15 @@ export interface NovoFavorito {
 export type CategoriaVeiculo = 'LigeiroPassageiros' | 'LigeiroMercadorias'
 export type Combustivel = 'GasoleoSimples' | 'GasoleoEspecial' | 'Gasolina95' | 'Gasolina95Especial' | 'Gasolina98' | 'Gpl' | 'Eletrico'
 
+// Getters: o nome é lido na língua do momento, não na de quando o módulo foi carregado.
 export const nomesCombustivel: Record<Combustivel, string> = {
-  GasoleoSimples: 'Gasóleo simples',
-  GasoleoEspecial: 'Gasóleo especial',
-  Gasolina95: 'Gasolina 95',
-  Gasolina95Especial: 'Gasolina 95 especial',
-  Gasolina98: 'Gasolina 98',
-  Gpl: 'GPL',
-  Eletrico: 'Elétrico',
+  get GasoleoSimples() { return t('Gasóleo simples', 'Diesel') },
+  get GasoleoEspecial() { return t('Gasóleo especial', 'Premium diesel') },
+  get Gasolina95() { return t('Gasolina 95', 'Petrol 95') },
+  get Gasolina95Especial() { return t('Gasolina 95 especial', 'Premium petrol 95') },
+  get Gasolina98() { return t('Gasolina 98', 'Petrol 98') },
+  get Gpl() { return t('GPL', 'LPG') },
+  get Eletrico() { return t('Elétrico', 'Electric') },
 }
 
 export type NormaEmissoes = 'Nedc' | 'Wltp'
@@ -373,7 +375,7 @@ async function pedido<T>(metodo: string, url: string, corpo?: unknown): Promise<
   const resposta = await fetch(url, {
     method: metodo,
     credentials: 'same-origin',
-    headers: corpo === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers: corpo === undefined ? { 'X-Idioma': lingua() } : { 'Content-Type': 'application/json', 'X-Idioma': lingua() },
     body: corpo === undefined ? undefined : JSON.stringify(corpo),
   })
   if (resposta.status === 401) throw new NaoAutenticado()
@@ -387,9 +389,9 @@ async function mensagemErro(resposta: Response): Promise<string> {
     const problema = await resposta.json()
     const erros = problema.errors ? Object.values(problema.errors).flat() : []
     // "detail" tem a explicação do servidor em português; "title" é só o nome do código HTTP (ex.: "Bad Gateway").
-    return erros.length > 0 ? erros.join(' ') : problema.detail ?? problema.title ?? `Erro ${resposta.status}`
+    return erros.length > 0 ? erros.join(' ') : problema.detail ?? problema.title ?? `${t('Erro', 'Error')} ${resposta.status}`
   } catch {
-    return `Erro ${resposta.status}`
+    return `${t('Erro', 'Error')} ${resposta.status}`
   }
 }
 
@@ -407,7 +409,7 @@ export const api = {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
       throw new NaoAutenticado()
     }
-    if (!resposta.ok) throw new Error(`Erro ${resposta.status}`)
+    if (!resposta.ok) throw new Error(`${t('Erro', 'Error')} ${resposta.status}`)
     return (await resposta.json()) as { email: string }
   },
 
@@ -438,7 +440,7 @@ export const api = {
   guardarCarta: (validade: string | null) => pedido<void>('PUT', '/api/carro/carta', { validade }),
   concelhos: () => pedido<string[]>('GET', '/api/carro/concelhos'),
   carregamento: async (concelho: string) => {
-    const r = await fetch(`/api/carro/carregamento?concelho=${encodeURIComponent(concelho)}`, { credentials: 'same-origin' })
+    const r = await fetch(`/api/carro/carregamento?concelho=${encodeURIComponent(concelho)}`, { credentials: 'same-origin', headers: { 'X-Idioma': lingua() } })
     return r.ok ? ((await r.json()) as CarregamentoConcelho) : null
   },
   avisos: () => pedido<EstadoAvisos>('GET', '/api/avisos'),
@@ -448,7 +450,7 @@ export const api = {
   apagarVeiculo: (id: string) => pedido<void>('DELETE', `/api/carro/veiculos/${id}`),
   combustiveis: async (concelho: string, combustivel: Combustivel, localidade?: string | null) => {
     const filtro = localidade ? `&localidade=${encodeURIComponent(localidade)}` : ''
-    const r = await fetch(`/api/carro/combustiveis?concelho=${encodeURIComponent(concelho)}&combustivel=${combustivel}${filtro}`, { credentials: 'same-origin' })
+    const r = await fetch(`/api/carro/combustiveis?concelho=${encodeURIComponent(concelho)}&combustivel=${combustivel}${filtro}`, { credentials: 'same-origin', headers: { 'X-Idioma': lingua() } })
     return r.ok ? ((await r.json()) as PrecosConcelho) : null
   },
 
@@ -479,26 +481,26 @@ const num = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 })
 export const euros = (v: number) => eur.format(v)
 export const inteiro = (v: number) => num.format(v)
 export const dataCurta = (iso: string) =>
-  new Date(iso + 'T00:00:00').toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })
+  new Date(iso + 'T00:00:00').toLocaleDateString(localeDatas(), { day: 'numeric', month: 'short', year: 'numeric' })
 
 /** "S5A20261" → "1.º trim. 2026" */
 export const periodoIne = (codigo: string) => {
   const m = /^S5A(\d{4})(\d)$/.exec(codigo)
-  return m ? `${m[2]}.º trim. ${m[1]}` : codigo
+  return m ? t(`${m[2]}.º trim. ${m[1]}`, `Q${m[2]} ${m[1]}`) : codigo
 }
 
 /** Nomes legíveis dos campos do perfil, para o painel dizer o que falta preencher. */
 export const nomesCampos: Record<string, string> = {
-  DataNascimento: 'data de nascimento',
-  Concelho: 'concelho',
-  Freguesia: 'freguesia',
-  ResidenteFiscal: 'residência fiscal',
-  Dependente: 'dependente',
-  CategoriaRendimento: 'tipo de rendimento',
-  RendimentoAnualAgregado: 'rendimento do agregado',
-  NumeroAdultos: 'adultos no agregado',
-  SituacaoHabitacao: 'situação da habitação',
-  RendaMensal: 'renda mensal',
-  ProcuraComprarCasa: 'procura comprar casa',
-  OrcamentoCompra: 'orçamento de compra',
+  get DataNascimento() { return t('data de nascimento', 'date of birth') },
+  get Concelho() { return t('concelho', 'municipality') },
+  get Freguesia() { return t('freguesia', 'parish') },
+  get ResidenteFiscal() { return t('residência fiscal', 'tax residence') },
+  get Dependente() { return t('dependente', 'dependant') },
+  get CategoriaRendimento() { return t('tipo de rendimento', 'type of income') },
+  get RendimentoAnualAgregado() { return t('rendimento do agregado', 'household income') },
+  get NumeroAdultos() { return t('adultos no agregado', 'adults in the household') },
+  get SituacaoHabitacao() { return t('situação da habitação', 'housing situation') },
+  get RendaMensal() { return t('renda mensal', 'monthly rent') },
+  get ProcuraComprarCasa() { return t('procura comprar casa', 'looking to buy') },
+  get OrcamentoCompra() { return t('orçamento de compra', 'purchase budget') },
 }

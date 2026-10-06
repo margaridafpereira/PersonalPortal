@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -89,7 +90,7 @@ public sealed class ModeloCompativelOpenAI(HttpClient http, IOptions<Configuraca
                 return resposta;
             }
         }
-        throw new ErroFornecedorIa($"{cfg.Fornecedor} está sobrecarregado neste momento (acontece no plano gratuito). Tenta daqui a um minuto.");
+        throw new ErroFornecedorIa(T($"{cfg.Fornecedor} está sobrecarregado neste momento (acontece no plano gratuito). Tenta daqui a um minuto.", $"{cfg.Fornecedor} is overloaded right now (it happens on the free plan). Try again in a minute."));
     }
 
     /// <summary>A resposta do modelo, ou null se ele estiver sobrecarregado (503) e valer a pena tentar outro.</summary>
@@ -110,11 +111,11 @@ public sealed class ModeloCompativelOpenAI(HttpClient http, IOptions<Configuraca
         }
         catch (HttpRequestException e)
         {
-            throw new ErroFornecedorIa($"Não foi possível contactar {cfg.Fornecedor}. Confirma a ligação à internet (e o proxy, numa rede de empresa).", e);
+            throw new ErroFornecedorIa(T($"Não foi possível contactar {cfg.Fornecedor}. Confirma a ligação à internet (e o proxy, numa rede de empresa).", $"Could not reach {cfg.Fornecedor}. Check the internet connection (and the proxy, on a corporate network)."), e);
         }
         catch (TaskCanceledException e) when (!ct.IsCancellationRequested)
         {
-            throw new ErroFornecedorIa($"{cfg.Fornecedor} demorou demasiado a responder. Tenta outra vez.", e);
+            throw new ErroFornecedorIa(T($"{cfg.Fornecedor} demorou demasiado a responder. Tenta outra vez.", $"{cfg.Fornecedor} took too long to answer. Try again."), e);
         }
 
         using (resposta)
@@ -130,10 +131,10 @@ public sealed class ModeloCompativelOpenAI(HttpClient http, IOptions<Configuraca
                 log.LogWarning("{Fornecedor} respondeu {Estado}: {Corpo}", cfg.Fornecedor, (int)resposta.StatusCode, json.Length > 500 ? json[..500] : json);
                 throw new ErroFornecedorIa(resposta.StatusCode switch
                 {
-                    HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => $"A chave de {cfg.Fornecedor} não foi aceite. Confirma a configuração do assistente.",
-                    HttpStatusCode.TooManyRequests => $"Atingiste o limite de pedidos de {cfg.Fornecedor} (no plano gratuito é por minuto e por dia). Tenta daqui a pouco.",
-                    HttpStatusCode.NotFound => $"{cfg.Fornecedor} não conhece o modelo \"{modelo}\" (a Google retira modelos antigos). Confirma o nome na configuração.",
-                    _ => $"{cfg.Fornecedor} devolveu um erro ({(int)resposta.StatusCode}). Tenta outra vez.",
+                    HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => T($"A chave de {cfg.Fornecedor} não foi aceite. Confirma a configuração do assistente.", $"The {cfg.Fornecedor} key was not accepted. Check the assistant configuration."),
+                    HttpStatusCode.TooManyRequests => T($"Atingiste o limite de pedidos de {cfg.Fornecedor} (no plano gratuito é por minuto e por dia). Tenta daqui a pouco.", $"You hit the {cfg.Fornecedor} request limit (on the free plan it is per minute and per day). Try again shortly."),
+                    HttpStatusCode.NotFound => T($"{cfg.Fornecedor} não conhece o modelo \"{modelo}\" (a Google retira modelos antigos). Confirma o nome na configuração.", $"{cfg.Fornecedor} does not know the model \"{modelo}\" (Google retires old models). Check the name in the configuration."),
+                    _ => T($"{cfg.Fornecedor} devolveu um erro ({(int)resposta.StatusCode}). Tenta outra vez.", $"{cfg.Fornecedor} returned an error ({(int)resposta.StatusCode}). Try again."),
                 });
             }
             return Interpretar(json);
@@ -224,7 +225,7 @@ public sealed class ModeloCompativelOpenAI(HttpClient http, IOptions<Configuraca
         }
         catch (Exception e) when (e is JsonException or KeyNotFoundException or IndexOutOfRangeException or InvalidOperationException)
         {
-            throw new ErroFornecedorIa("A resposta do fornecedor de IA veio num formato inesperado.", e);
+            throw new ErroFornecedorIa(T("A resposta do fornecedor de IA veio num formato inesperado.", "The AI provider's answer came in an unexpected format."), e);
         }
     }
 }

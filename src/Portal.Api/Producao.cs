@@ -90,7 +90,7 @@ public static class Producao
 
             if (email is null || !permitidos.Contains(email, StringComparer.OrdinalIgnoreCase))
             {
-                await Results.Problem("Este portal é privado: só se podem registar pessoas convidadas. Pede acesso a quem gere o portal.",
+                await Results.Problem(Portal.Core.Idioma.T("Este portal é privado: só se podem registar pessoas convidadas. Pede acesso a quem gere o portal.", "This portal is private: only invited people can sign up. Ask whoever runs it for access."),
                     statusCode: StatusCodes.Status403Forbidden).ExecuteAsync(ctx);
                 return;
             }

@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 namespace Portal.Modules.Investimentos;
 
 /// <summary>Uma linha do Anexo J, quadro 9.2A: uma venda (ou parte dela) casada com um lote de compra.</summary>
@@ -105,9 +106,9 @@ public static class CalculoIrs
                 }
 
                 if (semCusto > 0 && precoEur is not null)
-                    avisos.Add($"Venda de {op.Nome} ({op.Ativo}) a {data:dd/MM/yyyy}: {semCusto} título(s) vieram de uma compra sem câmbio e ficaram fora das contas.");
+                    avisos.Add(T($"Venda de {op.Nome} ({op.Ativo}) a {data:dd/MM/yyyy}: {semCusto} título(s) vieram de uma compra sem câmbio e ficaram fora das contas.", $"Sale of {op.Nome} ({op.Ativo}) on {data:dd/MM/yyyy}: {semCusto} share(s) came from a purchase with no exchange rate and were left out."));
                 if (porVender > 0 && data.Year == ano)
-                    avisos.Add($"Venda de {op.Nome} ({op.Ativo}) a {data:dd/MM/yyyy}: faltam compras registadas para {porVender} título(s). Importa o histórico completo.");
+                    avisos.Add(T($"Venda de {op.Nome} ({op.Ativo}) a {data:dd/MM/yyyy}: faltam compras registadas para {porVender} título(s). Importa o histórico completo.", $"Sale of {op.Nome} ({op.Ativo}) on {data:dd/MM/yyyy}: no recorded purchases for {porVender} share(s). Import the full history."));
             }
         }
 
@@ -125,7 +126,7 @@ public static class CalculoIrs
             // Acima da taxa da convenção, a retenção não abate ao imposto português (nem se declara como tal no quadro 8A).
             if (TaxaConvencao.TryGetValue(Paises.Iso(op.Ativo), out var taxa) && r > Arredondar(b * taxa))
             {
-                avisos.Add($"{op.Nome}: retiveram-te mais de {taxa * 100:0}% no país da fonte. Só {taxa * 100:0}% conta como crédito; o excesso pode ser pedido de volta (ou evitado com o formulário W-8BEN na corretora).");
+                avisos.Add(T($"{op.Nome}: retiveram-te mais de {taxa * 100:0}% no país da fonte. Só {taxa * 100:0}% conta como crédito; o excesso pode ser pedido de volta (ou evitado com o formulário W-8BEN na corretora).", $"{op.Nome}: more than {taxa * 100:0}% was withheld in the source country. Only {taxa * 100:0}% counts as a credit; the excess can be reclaimed (or avoided with a W-8BEN form at your broker)."));
                 r = b * taxa;
             }
             dividendos.Add((op.Ativo, Arredondar(b), Arredondar(r), Arredondar(retidoLaFora) - Arredondar(r)));
@@ -145,12 +146,12 @@ public static class CalculoIrs
         var impostoDividendos = porPais.Sum(d => Math.Max(0, Arredondar(d.Bruto * TaxaAutonoma) - d.Retencao));
 
         if (linhas.Any(l => l.DetidoMenosDe365Dias))
-            avisos.Add("Há vendas de títulos detidos menos de 365 dias. Se o teu rendimento coletável total chegar ao último escalão de IRS, o englobamento destes ganhos é obrigatório.");
+            avisos.Add(T("Há vendas de títulos detidos menos de 365 dias. Se o teu rendimento coletável total chegar ao último escalão de IRS, o englobamento destes ganhos é obrigatório.", "Some sales are of shares held under 365 days. If your total taxable income reaches the top IRS bracket, these gains must be aggregated with your other income."));
         var paraisos = linhas.Select(l => l.Pais).Concat(porPais.Select(d => d.Pais)).Where(Classificacao.RegimesFiscaisFavoraveis.Contains).Distinct().ToList();
         if (paraisos.Count > 0)
-            avisos.Add($"Há rendimentos com origem em {string.Join(", ", paraisos)}, que está na lista de regimes fiscais mais favoráveis. Pode aplicar-se uma taxa de 35% em vez de 28%: confirma com um contabilista.");
+            avisos.Add(T($"Há rendimentos com origem em {string.Join(", ", paraisos)}, que está na lista de regimes fiscais mais favoráveis. Pode aplicar-se uma taxa de 35% em vez de 28%: confirma com um contabilista.", $"Some income comes from {string.Join(", ", paraisos)}, which is on the list of preferential tax regimes. A 35% rate may apply instead of 28%: check with an accountant."));
         if (linhas.Any(l => l.Pais == "??") || porPais.Any(d => d.Pais == "??"))
-            avisos.Add("Há títulos sem ISIN (algumas corretoras só dão o ticker): o país da fonte ficou por identificar. Indica o ISIN de cada um no separador Operações.");
+            avisos.Add(T("Há títulos sem ISIN (algumas corretoras só dão o ticker): o país da fonte ficou por identificar. Indica o ISIN de cada um no separador Operações.", "Some holdings have no ISIN (some brokers only give the ticker), so the source country is unknown. Enter each ISIN in the Transactions tab."));
 
         return new RelatorioIrs(ano, linhas.OrderBy(l => l.DataRealizacao).ToList(), porPais,
             saldo, Arredondar(Math.Max(0, saldo) * TaxaAutonoma), brutos, retido, impostoDividendos, avisos.Distinct().ToList());
@@ -164,7 +165,7 @@ public static class CalculoIrs
         var moeda = op.MoedaComissoes ?? "EUR";
         if (cambio(moeda, data) is { } taxa and > 0)
             return op.Comissoes / taxa;
-        avisos.Add($"Sem câmbio de {moeda} para {data:dd/MM/yyyy} ({op.Nome}): as comissões desta operação ficaram fora das despesas.");
+        avisos.Add(T($"Sem câmbio de {moeda} para {data:dd/MM/yyyy} ({op.Nome}): as comissões desta operação ficaram fora das despesas.", $"No {moeda} exchange rate for {data:dd/MM/yyyy} ({op.Nome}): this transaction's fees were left out of expenses."));
         return 0;
     }
 
@@ -172,7 +173,7 @@ public static class CalculoIrs
     {
         if (cambio(moeda, data) is { } taxa and > 0)
             return valor / taxa;
-        avisos.Add($"Sem câmbio de {moeda} para {data:dd/MM/yyyy} ({op.Nome}): o valor desta operação ficou fora das contas.");
+        avisos.Add(T($"Sem câmbio de {moeda} para {data:dd/MM/yyyy} ({op.Nome}): o valor desta operação ficou fora das contas.", $"No {moeda} exchange rate for {data:dd/MM/yyyy} ({op.Nome}): this transaction was left out."));
         return null;
     }
 

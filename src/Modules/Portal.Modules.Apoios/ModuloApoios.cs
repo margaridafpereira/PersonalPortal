@@ -9,6 +9,7 @@ using Portal.Core.Prazos;
 using Portal.Core.Dados;
 using Portal.Core.Modulos;
 using Portal.Core.Perfil;
+using static Portal.Core.Idioma;
 using Portal.Modules.Apoios.Prazos;
 using Portal.Modules.Apoios.Regras;
 
@@ -17,8 +18,8 @@ namespace Portal.Modules.Apoios;
 public sealed class ModuloApoios : IModulo
 {
     public string Id => "apoios";
-    public string Nome => "Radar de apoios e prazos";
-    public string Descricao => "Apoios públicos a que provavelmente tens direito e os prazos que não podes falhar.";
+    public string Nome => T("Radar de apoios e prazos", "Benefits and deadlines");
+    public string Descricao => T("Apoios públicos a que provavelmente tens direito e os prazos que não podes falhar.", "Public benefits you are probably entitled to, and the deadlines you cannot miss.");
 
     public IReadOnlyCollection<string> CamposPerfil { get; } =
     [
@@ -66,7 +67,7 @@ public sealed class ModuloApoios : IModulo
             var (perfil, hoje) = await CarregarAsync(user, db, relogio, ct);
             var indexantes = fonte.Obter(hoje.Year);
             return indexantes is null
-                ? Results.Problem($"Ainda não há indexantes para {hoje.Year}.", statusCode: 503)
+                ? Results.Problem(T($"Ainda não há indexantes para {hoje.Year}.", $"There are no reference values for {hoje.Year} yet."), statusCode: 503)
                 : Results.Ok(MotorApoios.Avaliar(perfil, indexantes, hoje));
         });
 
@@ -102,9 +103,9 @@ public sealed class ModuloApoios : IModulo
             var provaveis = resultados.Where(r => r.Estado == EstadoElegibilidade.Provavel).ToList();
             var porConfirmar = resultados.Count(r => r.Estado == EstadoElegibilidade.FaltaInformacao);
 
-            indicadores.Add(new Indicador(provaveis.Count.ToString(), provaveis.Count == 1 ? "apoio provável" : "apoios prováveis", "positivo"));
+            indicadores.Add(new Indicador(provaveis.Count.ToString(), provaveis.Count == 1 ? T("apoio provável", "likely benefit") : T("apoios prováveis", "likely benefits"), "positivo"));
             if (porConfirmar > 0)
-                indicadores.Add(new Indicador(porConfirmar.ToString(), "precisam de mais dados", "aviso"));
+                indicadores.Add(new Indicador(porConfirmar.ToString(), T("precisam de mais dados", "need more data"), "aviso"));
 
             itens.AddRange(provaveis.Take(3).Select(r => new ItemCartao(r.Apoio.Nome, r.Estimativa)));
         }
@@ -113,12 +114,12 @@ public sealed class ModuloApoios : IModulo
         if (proximo is not null)
         {
             var dias = proximo.DiasEmFalta(contexto.Hoje);
-            indicadores.Add(new Indicador(dias.ToString(), $"dias até: {proximo.Titulo}", dias <= 14 ? "aviso" : "neutro"));
+            indicadores.Add(new Indicador(dias.ToString(), T($"dias até: {proximo.Titulo}", $"days until: {proximo.Titulo}"), dias <= 14 ? "aviso" : "neutro"));
         }
 
         var resumo = emFalta.Count > 0
-            ? $"Completa {emFalta.Count} campo(s) do perfil para resultados mais certos."
-            : "Com base no teu perfil.";
+            ? T($"Completa {emFalta.Count} campo(s) do perfil para resultados mais certos.", $"Fill in {emFalta.Count} more profile field(s) for more accurate results.")
+            : T("Com base no teu perfil.", "Based on your profile.");
 
         return Task.FromResult(new CartaoPainel(Id, Nome, resumo, itens, emFalta) { Indicadores = indicadores });
     }

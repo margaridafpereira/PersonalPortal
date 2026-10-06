@@ -41,8 +41,8 @@ public interface IEnviadorEmail
 public sealed class EnviadorSmtp(IOptions<ConfiguracaoEmail> opcoes, IWebHostEnvironment ambiente) : IEnviadorEmail
 {
     public string Destino => opcoes.Value.EnviaDeVerdade
-        ? $"enviados por {opcoes.Value.Servidor}"
-        : $"gravados como ficheiros .eml em {PastaCompleta()} (modo de teste: ainda não há servidor de email configurado)";
+        ? Portal.Core.Idioma.T($"enviados por {opcoes.Value.Servidor}", $"sent via {opcoes.Value.Servidor}")
+        : Portal.Core.Idioma.T($"gravados como ficheiros .eml em {PastaCompleta()} (modo de teste: ainda não há servidor de email configurado)", $"saved as .eml files in {PastaCompleta()} (test mode: no email server configured yet)");
 
     public async Task EnviarAsync(Email email, CancellationToken ct)
     {

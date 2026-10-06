@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -68,9 +69,9 @@ public static class AssistenteEndpoints
             var cfg = opcoes.Value;
             var id = Id(user);
             if (!cfg.Configurado)
-                return Results.Problem("O assistente ainda não está configurado: falta a chave do fornecedor de IA.", statusCode: 503);
+                return Results.Problem(T("O assistente ainda não está configurado: falta a chave do fornecedor de IA.", "The assistant is not set up yet: the AI provider key is missing."), statusCode: 503);
             if ((await db.Preferencias.FindAsync([id], ct))?.AssistenteAceiteEm is null)
-                return Results.Problem("Lê e aceita a nota sobre os dados antes de usar o assistente.", statusCode: 409);
+                return Results.Problem(T("Lê e aceita a nota sobre os dados antes de usar o assistente.", "Read and accept the data notice before using the assistant."), statusCode: 409);
             if (Validar(pedido.Conversa) is { } erro)
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["Conversa"] = [erro] });
 
@@ -78,7 +79,7 @@ public static class AssistenteEndpoints
             var chave = $"assistente:{id}:{relogio.GetUtcNow():yyyyMMddHH}";
             var pedidos = cache.GetOrCreate(chave, e => { e.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1); return 0; });
             if (pedidos >= cfg.PedidosPorHora)
-                return Results.Problem($"Chegaste ao limite de {cfg.PedidosPorHora} perguntas por hora. Tenta daqui a pouco.", statusCode: 429);
+                return Results.Problem(T($"Chegaste ao limite de {cfg.PedidosPorHora} perguntas por hora. Tenta daqui a pouco.", $"You have reached the limit of {cfg.PedidosPorHora} questions an hour. Try again shortly."), statusCode: 429);
             cache.Set(chave, pedidos + 1, TimeSpan.FromHours(1));
 
             var perfil = await db.Perfis.FindAsync([id], ct) ?? new PerfilUtilizador { UtilizadorId = id };
@@ -98,24 +99,27 @@ public static class AssistenteEndpoints
 
     /// <summary>A nota mostrada antes da primeira utilização e sempre visível no assistente.</summary>
     public static string Nota(ConfiguracaoAssistente cfg) =>
-        $"As tuas perguntas e os dados do portal que o assistente consultar para responder (perfil, apoios, veículos, investimentos, imóveis) são enviados para {cfg.Fornecedor}."
+        T($"As tuas perguntas e os dados do portal que o assistente consultar para responder (perfil, apoios, veículos, investimentos, imóveis) são enviados para {cfg.Fornecedor}.",
+          $"Your questions and the portal data the assistant looks up to answer (profile, benefits, vehicles, investments, listings) are sent to {cfg.Fornecedor}.")
         + (cfg.PlanoGratuito
-            ? " No plano gratuito, o fornecedor pode guardar estes dados, usá-los para melhorar os seus modelos e revisores humanos podem lê-los. Não escrevas nada que não queiras partilhar."
+            ? T(" No plano gratuito, o fornecedor pode guardar estes dados, usá-los para melhorar os seus modelos e revisores humanos podem lê-los. Não escrevas nada que não queiras partilhar.",
+                " On the free plan, the provider may keep this data, use it to improve its models, and human reviewers may read it. Do not write anything you would not want to share.")
             : "")
-        + " O assistente só consulta, não altera nada no portal, e pode enganar-se: confirma os valores importantes.";
+        + T(" O assistente só consulta, não altera nada no portal, e pode enganar-se: confirma os valores importantes.",
+            " The assistant only looks things up, never changes anything in the portal, and can be wrong: check the important figures.");
 
     private static string? Validar(IReadOnlyList<MensagemConversa>? conversa)
     {
         if (conversa is not { Count: > 0 })
-            return "A conversa está vazia.";
+            return T("A conversa está vazia.", "The conversation is empty.");
         if (conversa.Count > MaxMensagens)
-            return $"A conversa tem mais de {MaxMensagens} mensagens: começa uma nova.";
+            return T($"A conversa tem mais de {MaxMensagens} mensagens: começa uma nova.", $"The conversation has more than {MaxMensagens} messages: start a new one.");
         if (conversa.Any(m => m.Papel is not ("utilizador" or "assistente") || string.IsNullOrWhiteSpace(m.Texto)))
-            return "Mensagem inválida.";
+            return T("Mensagem inválida.", "Invalid message.");
         if (conversa.Any(m => m.Texto.Length > MaxCaracteres))
-            return $"Cada mensagem pode ter até {MaxCaracteres} caracteres.";
+            return T($"Cada mensagem pode ter até {MaxCaracteres} caracteres.", $"Each message can be up to {MaxCaracteres} characters.");
         if (conversa[^1].Papel != "utilizador")
-            return "A última mensagem tem de ser uma pergunta.";
+            return T("A última mensagem tem de ser uma pergunta.", "The last message must be a question.");
         return null;
     }
 

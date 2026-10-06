@@ -50,7 +50,7 @@ public static class PerfilEndpoints
             if (desconhecidos.Count > 0)
                 return Results.ValidationProblem(new Dictionary<string, string[]>
                 {
-                    [nameof(dados.SeccoesAtivas)] = [$"Secções desconhecidas: {string.Join(", ", desconhecidos)}"],
+                    [nameof(dados.SeccoesAtivas)] = [Portal.Core.Idioma.T($"Secções desconhecidas: {string.Join(", ", desconhecidos)}", $"Unknown sections: {string.Join(", ", desconhecidos)}")],
                 });
 
             var prefs = await ObterPreferenciasAsync(db, Id(user), modulos, ct);

@@ -38,6 +38,15 @@ builder.Services.ConfigureApplicationCookie(o =>
 
 var app = builder.Build();
 
+// Língua dos textos gerados pelo servidor (ver Portal.Core.Idioma).
+app.Use(async (ctx, next) =>
+{
+    var idioma = ctx.Request.Headers["X-Idioma"].FirstOrDefault() ?? ctx.Request.Query["idioma"].FirstOrDefault();
+    if (idioma?.StartsWith("en", StringComparison.OrdinalIgnoreCase) == true)
+        Portal.Core.Idioma.Definir(true);
+    await next(ctx);
+});
+
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 

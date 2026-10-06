@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text;
@@ -29,8 +30,10 @@ public sealed class ModuloInvestimentos : IModulo
     private static readonly CultureInfo Pt = CultureInfo.GetCultureInfo("pt-PT");
 
     public string Id => "investimentos";
-    public string Nome => "IRS de investimentos";
-    public string Descricao => "Mais-valias e dividendos de corretoras estrangeiras, prontos para o Anexo J.";
+    private static string DemasiadoGrande => T("O ficheiro é demasiado grande (máximo 5 MB).", "The file is too large (5 MB maximum).");
+
+    public string Nome => T("IRS de investimentos", "Investment taxes (IRS)");
+    public string Descricao => T("Mais-valias e dividendos de corretoras estrangeiras, prontos para o Anexo J.", "Capital gains and dividends from foreign brokers, ready for Annex J of the IRS return.");
 
     public IReadOnlyCollection<string> CamposPerfil { get; } = [Portal.Core.Perfil.CamposPerfil.ResidenteFiscal];
 
@@ -99,11 +102,11 @@ public sealed class ModuloInvestimentos : IModulo
         grupo.MapPost("/operacoes", async (ClaimsPrincipal user, NovaOperacao d, PortalDbContext db, TimeProvider relogio, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(d.Ativo) || d.Ativo.Trim().Length > 20 || d.Quantidade <= 0 || d.PrecoUnitario < 0)
-                return Problema("Ativo", "Indica o ISIN, a quantidade e o preço.");
+                return Problema("Ativo", T("Indica o ISIN, a quantidade e o preço.", "Enter the ISIN, the quantity and the price."));
             if (!MoedaValida(d.Moeda) || (d.MoedaRetencao is not null && !MoedaValida(d.MoedaRetencao)))
-                return Problema("Moeda", "Indica a moeda com o código de 3 letras (ex.: EUR, USD).");
+                return Problema("Moeda", T("Indica a moeda com o código de 3 letras (ex.: EUR, USD).", "Enter the currency as a 3-letter code (e.g. EUR, USD)."));
             if (d.Comissoes < 0 || d.RetencaoFonte < 0)
-                return Problema("Comissoes", "As comissões e o imposto retido não podem ser negativos.");
+                return Problema("Comissoes", T("As comissões e o imposto retido não podem ser negativos.", "Fees and withholding tax cannot be negative."));
 
             var op = new Operacao
             {
@@ -146,7 +149,7 @@ public sealed class ModuloInvestimentos : IModulo
             await db.SaveChangesAsync(ct);
 
             var repetidas = resultado.Operacoes.Count - novas.Count;
-            var avisos = repetidas > 0 ? [.. resultado.Avisos, $"{repetidas} operação(ões) já estavam importadas e foram ignoradas."] : resultado.Avisos;
+            var avisos = repetidas > 0 ? [.. resultado.Avisos, T($"{repetidas} operação(ões) já estavam importadas e foram ignoradas.", $"{repetidas} transaction(s) were already imported and were skipped.")] : resultado.Avisos;
             return Results.Ok(new { Importadas = novas.Count, Avisos = avisos });
         });
 
@@ -159,7 +162,7 @@ public sealed class ModuloInvestimentos : IModulo
         {
             var isin = dados.Isin.Trim().ToUpperInvariant();
             if (!Paises.IsinValido(isin))
-                return Problema("Isin", "O ISIN tem 12 caracteres: 2 letras do país, 9 letras ou números e 1 dígito (ex.: US0378331005).");
+                return Problema("Isin", T("O ISIN tem 12 caracteres: 2 letras do país, 9 letras ou números e 1 dígito (ex.: US0378331005).", "An ISIN has 12 characters: 2 country letters, 9 letters or digits and 1 check digit (e.g. US0378331005)."));
             var atual = ativo.Trim().ToUpperInvariant();
             var alteradas = await Operacoes(db, user).Where(o => o.Ativo == atual)
                 .ExecuteUpdateAsync(s => s.SetProperty(o => o.Ativo, isin), ct);
@@ -210,7 +213,7 @@ public sealed class ModuloInvestimentos : IModulo
         var emFalta = Portal.Core.Perfil.CamposPerfil.EmFalta(contexto.Perfil, CamposPerfil);
 
         if (operacoes.Count == 0)
-            return new CartaoPainel(Id, Nome, "Importa o histórico da tua corretora para preparar o Anexo J.", [], emFalta);
+            return new CartaoPainel(Id, Nome, T("Importa o histórico da tua corretora para preparar o Anexo J.", "Import your broker history to prepare Annex J."), [], emFalta);
 
         // Até ao fim do prazo de entrega (junho), o ano que interessa é o anterior.
         var ano = contexto.Hoje.Month <= 6 ? contexto.Hoje.Year - 1 : contexto.Hoje.Year;
@@ -218,18 +221,18 @@ public sealed class ModuloInvestimentos : IModulo
 
         var indicadores = new List<Indicador>
         {
-            new(r.SaldoMaisValias.ToString("C0", Pt), $"saldo de mais-valias {ano}", r.SaldoMaisValias >= 0 ? "positivo" : "aviso"),
-            new((r.ImpostoMaisValias + r.ImpostoDividendos).ToString("C0", Pt), "imposto estimado", "neutro"),
+            new(r.SaldoMaisValias.ToString("C0", Pt), T($"saldo de mais-valias {ano}", $"net capital gains {ano}"), r.SaldoMaisValias >= 0 ? "positivo" : "aviso"),
+            new((r.ImpostoMaisValias + r.ImpostoDividendos).ToString("C0", Pt), T("imposto estimado", "estimated tax"), "neutro"),
         };
         var itens = new List<ItemCartao>
         {
-            new($"{r.MaisValias.Count} linha(s) no quadro 9.2A e {r.Dividendos.Count} país(es) no quadro 8A"),
-            new($"{operacoes.Count} operações registadas"),
+            new(T($"{r.MaisValias.Count} linha(s) no quadro 9.2A e {r.Dividendos.Count} país(es) no quadro 8A", $"{r.MaisValias.Count} line(s) in table 9.2A and {r.Dividendos.Count} country(ies) in table 8A")),
+            new(T($"{operacoes.Count} operações registadas", $"{operacoes.Count} transactions recorded")),
         };
         if (r.Avisos.Count > 0)
-            itens.Add(new ItemCartao($"{r.Avisos.Count} aviso(s) para rever"));
+            itens.Add(new ItemCartao(T($"{r.Avisos.Count} aviso(s) para rever", $"{r.Avisos.Count} warning(s) to review")));
 
-        return new CartaoPainel(Id, Nome, $"Estimativa para o IRS de {ano}. Não substitui um contabilista.", itens, emFalta) { Indicadores = indicadores };
+        return new CartaoPainel(Id, Nome, T($"Estimativa para o IRS de {ano}. Não substitui um contabilista.", $"Estimate for the {ano} IRS return. Not a substitute for an accountant."), itens, emFalta) { Indicadores = indicadores };
     }
 
     /// <summary>Devolve o ficheiro como texto CSV (um Excel é convertido aqui), ou o erro a mostrar.</summary>
@@ -239,21 +242,21 @@ public sealed class ModuloInvestimentos : IModulo
         if (!string.IsNullOrEmpty(xlsx))
         {
             if (xlsx.Length > 7_000_000) // 5 MB em base64
-                return Problema("Conteudo", "O ficheiro é demasiado grande (máximo 5 MB).");
+                return Problema("Conteudo", DemasiadoGrande);
             try
             {
                 texto = Xlsx.ParaCsv(Convert.FromBase64String(xlsx));
-                return texto.Length == 0 ? Problema("Conteudo", "O ficheiro Excel não tem dados.") : null;
+                return texto.Length == 0 ? Problema("Conteudo", T("O ficheiro Excel não tem dados.", "The Excel file has no data.")) : null;
             }
             catch (Exception e) when (e is FormatException or InvalidDataException or System.Xml.XmlException)
             {
-                return Problema("Conteudo", "Não consegui ler o ficheiro Excel. Guarda-o como .xlsx (ou exporta em CSV) e tenta outra vez.");
+                return Problema("Conteudo", T("Não consegui ler o ficheiro Excel. Guarda-o como .xlsx (ou exporta em CSV) e tenta outra vez.", "Could not read the Excel file. Save it as .xlsx (or export to CSV) and try again."));
             }
         }
         if (string.IsNullOrEmpty(conteudo))
-            return Problema("Conteudo", "O ficheiro está vazio.");
+            return Problema("Conteudo", T("O ficheiro está vazio.", "The file is empty."));
         if (conteudo.Length > 5_000_000)
-            return Problema("Conteudo", "O ficheiro é demasiado grande (máximo 5 MB).");
+            return Problema("Conteudo", DemasiadoGrande);
         texto = conteudo;
         return null;
     }

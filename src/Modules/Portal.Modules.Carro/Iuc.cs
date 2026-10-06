@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 namespace Portal.Modules.Carro;
 
 /// <param name="Valor">Estimativa anual em euros, ou null se faltarem dados.</param>
@@ -44,14 +45,14 @@ public static class Iuc
         var gasoleo = v.Combustivel is Combustivel.GasoleoSimples or Combustivel.GasoleoEspecial;
 
         if (v.Categoria == CategoriaVeiculo.LigeiroMercadorias)
-            return new(null, "C", [], [], "Os ligeiros de mercadorias pagam pelo peso bruto e pelo uso: usa o simulador do Portal das Finanças.");
+            return new(null, "C", [], [], T("Os ligeiros de mercadorias pagam pelo peso bruto e pelo uso: usa o simulador do Portal das Finanças.", "Light goods vehicles pay by gross weight and use: use the Portal das Finanças simulator."));
         if (matricula.Year < 1981)
-            return new(0, "A", ["Carros matriculados antes de 1981 estão isentos."], [], null);
+            return new(0, "A", [T("Carros matriculados antes de 1981 estão isentos.", "Cars registered before 1981 are exempt.")], [], null);
 
         if (matricula < InicioCategoriaB)
         {
             if (v.Combustivel == Combustivel.Eletrico)
-                return new(null, "A", [], [], "Os elétricos anteriores a julho de 2007 pagam pela voltagem: usa o simulador do Portal das Finanças.");
+                return new(null, "A", [], [], T("Os elétricos anteriores a julho de 2007 pagam pela voltagem: usa o simulador do Portal das Finanças.", "Electric cars from before July 2007 pay by voltage: use the Portal das Finanças simulator."));
             if (v.Cilindrada is not { } cc)
                 return new(null, "A", [], ["cilindrada"], null);
 
@@ -59,18 +60,18 @@ public static class Iuc
             var tabela = gasoleo ? GasoleoA : GasolinaA;
             var taxa = tabela.First(t => cc <= t.Ate).Taxas[escalaoIdade];
             return new(taxa, "A",
-                [$"Categoria A ({(gasoleo ? "gasóleo" : "gasolina")}, {cc} cm³, matrícula de {matricula.Year}): {taxa:0.00} €"],
+                [T($"Categoria A ({(gasoleo ? "gasóleo" : "gasolina")}, {cc} cm³, matrícula de {matricula.Year}): {taxa:0.00} €", $"Category A ({(gasoleo ? "diesel" : "petrol")}, {cc} cm³, registered {matricula.Year}): {taxa:0.00} €")],
                 [],
-                gasoleo ? "Não inclui o adicional de IUC dos carros a gasóleo da categoria A: confirma no simulador." : null);
+                gasoleo ? T("Não inclui o adicional de IUC dos carros a gasóleo da categoria A: confirma no simulador.", "Does not include the IUC surcharge on category A diesel cars: check the simulator.") : null);
         }
 
         // Categoria B: os 100% elétricos estão isentos (CIUC, art. 5.º).
         if (v.Combustivel == Combustivel.Eletrico)
-            return new(0, "B", ["Veículos 100% elétricos estão isentos de IUC."], [], null);
+            return new(0, "B", [T("Veículos 100% elétricos estão isentos de IUC.", "Fully electric vehicles are exempt from IUC.")], [], null);
 
         var emFalta = new List<string>();
-        if (v.Cilindrada is null) emFalta.Add("cilindrada");
-        if (v.EmissoesCo2 is null) emFalta.Add("emissões de CO2");
+        if (v.Cilindrada is null) emFalta.Add(T("cilindrada", "engine size"));
+        if (v.EmissoesCo2 is null) emFalta.Add(T("emissões de CO2", "CO2 emissions"));
         if (emFalta.Count > 0)
             return new(null, "B", [], emFalta, null);
 
@@ -86,25 +87,25 @@ public static class Iuc
 
         var detalhe = new List<string>
         {
-            $"Cilindrada ({cilindrada} cm³): {taxaCilindrada:0.00} €",
+            T($"Cilindrada ({cilindrada} cm³): {taxaCilindrada:0.00} €", $"Engine size ({cilindrada} cm³): {taxaCilindrada:0.00} €"),
             $"CO2 ({co2} g/km, {norma.ToString().ToUpperInvariant()}): {taxaCo2:0.00} €",
-            $"Coeficiente do ano da matrícula ({matricula.Year}): × {coeficiente:0.00}",
+            T($"Coeficiente do ano da matrícula ({matricula.Year}): × {coeficiente:0.00}", $"Registration-year coefficient ({matricula.Year}): × {coeficiente:0.00}"),
         };
         var total = (taxaCilindrada + taxaCo2) * coeficiente;
 
         if (matricula.Year >= 2017 && AdicionalCo2[escalaoCo2] > 0)
         {
             total += AdicionalCo2[escalaoCo2];
-            detalhe.Add($"Adicional de CO2 (matrícula desde 2017): + {AdicionalCo2[escalaoCo2]:0.00} €");
+            detalhe.Add(T($"Adicional de CO2 (matrícula desde 2017): + {AdicionalCo2[escalaoCo2]:0.00} €", $"CO2 surcharge (registered since 2017): + {AdicionalCo2[escalaoCo2]:0.00} €"));
         }
         if (gasoleo)
         {
             var adicional = AdicionalGasoleoB.First(t => cilindrada <= t.Ate).Taxa;
             total += adicional;
-            detalhe.Add($"Adicional de gasóleo: + {adicional:0.00} €");
+            detalhe.Add(T($"Adicional de gasóleo: + {adicional:0.00} €", $"Diesel surcharge: + {adicional:0.00} €"));
         }
 
         return new(Math.Round(total, 2, MidpointRounding.AwayFromZero), "B", detalhe, [],
-            v.NormaCo2 is null ? $"Assumi a norma {norma.ToString().ToUpperInvariant()} para o CO2; confirma no certificado de matrícula." : null);
+            v.NormaCo2 is null ? T($"Assumi a norma {norma.ToString().ToUpperInvariant()} para o CO2; confirma no certificado de matrícula.", $"Assumed the {norma.ToString().ToUpperInvariant()} standard for CO2; check the registration certificate.") : null);
     }
 }

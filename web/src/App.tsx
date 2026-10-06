@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, NaoAutenticado } from './api'
 import { Assistente } from './componentes/Assistente'
 import { Icone, type NomeIcone } from './componentes/Icone'
+import { SeletorLingua } from './componentes/SeletorLingua'
+import { lingua, t, type Lingua } from './i18n'
 import { AnunciosPagina } from './paginas/AnunciosPagina'
 import { ApoiosPagina } from './paginas/ApoiosPagina'
 import { CarroPagina } from './paginas/CarroPagina'
@@ -12,19 +14,19 @@ import { PerfilPagina } from './paginas/PerfilPagina'
 
 type Pagina = 'painel' | 'apoios' | 'anuncios' | 'carro' | 'investimentos' | 'perfil'
 
-const paginas: { id: Pagina; nome: string; icone: NomeIcone; seccao?: boolean }[] = [
-  { id: 'painel', nome: 'Início', icone: 'inicio' },
-  { id: 'apoios', nome: 'Apoios e prazos', icone: 'escudo', seccao: true },
-  { id: 'anuncios', nome: 'Anúncios', icone: 'casa', seccao: true },
-  { id: 'carro', nome: 'Carro', icone: 'carro', seccao: true },
-  { id: 'investimentos', nome: 'Investimentos', icone: 'grafico', seccao: true },
-  { id: 'perfil', nome: 'Perfil', icone: 'pessoa' },
+const paginas = (): { id: Pagina; nome: string; icone: NomeIcone; seccao?: boolean }[] => [
+  { id: 'painel', nome: t('Início', 'Home'), icone: 'inicio' },
+  { id: 'apoios', nome: t('Apoios e prazos', 'Benefits'), icone: 'escudo', seccao: true },
+  { id: 'anuncios', nome: t('Anúncios', 'Listings'), icone: 'casa', seccao: true },
+  { id: 'carro', nome: t('Carro', 'Car'), icone: 'carro', seccao: true },
+  { id: 'investimentos', nome: t('Investimentos', 'Investments'), icone: 'grafico', seccao: true },
+  { id: 'perfil', nome: t('Perfil', 'Profile'), icone: 'pessoa' },
 ]
 
 function paginaDoEndereco(): Pagina {
   // As preferências passaram para a página do perfil; links antigos continuam a funcionar.
   const hash = window.location.hash.replace('#/', '').replace('preferencias', 'perfil')
-  return paginas.some(p => p.id === hash) ? (hash as Pagina) : 'painel'
+  return paginas().some(p => p.id === hash) ? (hash as Pagina) : 'painel'
 }
 
 export default function App() {
@@ -32,6 +34,8 @@ export default function App() {
   const [pagina, setPagina] = useState<Pagina>(paginaDoEndereco)
   const [ativas, setAtivas] = useState<string[] | null>(null)
   const [emDemo, setEmDemo] = useState(false)
+  // Mudar de língua volta a montar as páginas, que pedem os dados outra vez já na língua nova.
+  const [idioma, setIdioma] = useState<Lingua>(lingua)
 
   const verificarSessao = useCallback(() => {
     api.quemSou()
@@ -56,20 +60,20 @@ export default function App() {
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
 
-  if (email === undefined) return <main className="centro">A carregar…</main>
-  if (email === null) return <Entrar aoEntrar={verificarSessao} />
+  if (email === undefined) return <main className="centro">{t('A carregar…', 'Loading…')}</main>
+  if (email === null) return <Entrar key={idioma} aoEntrar={verificarSessao} aoMudarLingua={setIdioma} />
 
   const sair = async () => { await api.sair(); setEmail(null) }
-  const visiveis = paginas.filter(p => !p.seccao || !ativas || ativas.includes(p.id))
+  const visiveis = paginas().filter(p => !p.seccao || !ativas || ativas.includes(p.id))
 
   return (
-    <div className="app">
+    <div className="app" key={idioma}>
       <header className="topo">
         <a href="#/painel" className="marca">
           <span className="logo" aria-hidden="true">P</span>
-          Portal pessoal
+          {t('Portal pessoal', 'Personal portal')}
         </a>
-        <nav aria-label="Principal">
+        <nav aria-label={t('Principal', 'Main')}>
           {visiveis.map(p => (
             <a key={p.id} href={`#/${p.id}`} aria-current={pagina === p.id ? 'page' : undefined}>
               <Icone nome={p.icone} tamanho={18} />
@@ -78,15 +82,16 @@ export default function App() {
           ))}
         </nav>
         <div className="utilizador">
-          <a href="#/perfil" className="avatar" title={`${email} · editar perfil`}>{email[0].toUpperCase()}</a>
-          <button className="icone-botao" onClick={sair} title="Sair" aria-label="Sair">
+          <SeletorLingua aoMudar={setIdioma} />
+          <a href="#/perfil" className="avatar" title={`${email} · ${t('editar perfil', 'edit profile')}`}>{email[0].toUpperCase()}</a>
+          <button className="icone-botao" onClick={sair} title={t('Sair', 'Sign out')} aria-label={t('Sair', 'Sign out')}>
             <Icone nome="sair" tamanho={18} />
           </button>
         </div>
       </header>
       {emDemo && (
         <p className="faixa-demo" role="status">
-          Estás na <strong>conta de demonstração</strong>: os dados são fictícios e não podes alterar nada. Repostos todos os dias.
+          {t('Estás na conta de demonstração: os dados são fictícios e não podes alterar nada. Repostos todos os dias.', 'You are in the demo account: the data is fictitious and you cannot change anything. Reset every day.')}
         </p>
       )}
       <main>

@@ -1,3 +1,4 @@
+using static Portal.Core.Idioma;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text;
@@ -29,8 +30,8 @@ public sealed class ModuloCarro : IModulo
     private static readonly CultureInfo Pt = CultureInfo.GetCultureInfo("pt-PT");
 
     public string Id => "carro";
-    public string Nome => "Carro";
-    public string Descricao => "Inspeção, IUC, seguro e carta sem esquecer, quanto gastas, e onde abastecer ou carregar mais barato.";
+    public string Nome => T("Carro", "Car");
+    public string Descricao => T("Inspeção, IUC, seguro e carta sem esquecer, quanto gastas, e onde abastecer ou carregar mais barato.", "Inspection, road tax, insurance and licence on time, what you spend, and where to refuel or charge for less.");
 
     public IReadOnlyCollection<string> CamposPerfil { get; } = [Portal.Core.Perfil.CamposPerfil.Concelho];
 
@@ -182,9 +183,9 @@ public sealed class ModuloCarro : IModulo
             if (!await Veiculos(db, user).AnyAsync(v => v.Id == id, ct))
                 return Results.NotFound();
             if (dados.Litros <= 0 || dados.ValorTotal < 0 || dados.Quilometros < 0)
-                return Problema("Litros", "Indica os litros (ou kWh), o valor pago e os quilómetros do conta-quilómetros.");
+                return Problema("Litros", T("Indica os litros (ou kWh), o valor pago e os quilómetros do conta-quilómetros.", "Enter the litres (or kWh), the amount paid and the odometer reading."));
             if (dados.Data > Hoje(relogio))
-                return Problema("Data", "A data não pode ser no futuro.");
+                return Problema("Data", T("A data não pode ser no futuro.", "The date cannot be in the future."));
 
             var a = new Abastecimento
             {
@@ -256,13 +257,13 @@ public sealed class ModuloCarro : IModulo
         var indicadores = new List<Indicador>();
 
         if (veiculos.Count == 0)
-            return new CartaoPainel(Id, Nome, "Adiciona o teu carro para receberes os prazos e os preços do combustível.", itens, emFalta);
+            return new CartaoPainel(Id, Nome, T("Adiciona o teu carro para receberes os prazos e os preços do combustível.", "Add your car to get its deadlines and fuel prices."), itens, emFalta);
 
         var prazos = TodosOsPrazos(veiculos, contexto.Perfil, contexto.Hoje);
         if (prazos.FirstOrDefault() is { } proximo)
         {
             var dias = proximo.DiasEmFalta(contexto.Hoje);
-            indicadores.Add(new Indicador(dias.ToString(), $"dias até: {proximo.Titulo}", dias <= 30 ? "aviso" : "neutro"));
+            indicadores.Add(new Indicador(dias.ToString(), T($"dias até: {proximo.Titulo}", $"days until: {proximo.Titulo}"), dias <= 30 ? "aviso" : "neutro"));
         }
 
         // O primeiro veículo a combustível (um elétrico não tem preço na DGEG), como na página do Carro.
@@ -272,15 +273,15 @@ public sealed class ModuloCarro : IModulo
             var precos = await contexto.Servicos.GetRequiredService<IPrecosCombustiveis>().NoConcelhoAsync(contexto.Perfil.Concelho, principal.Combustivel, ct);
             if (precos is not null)
             {
-                indicadores.Add(new Indicador($"{precos.Minimo.ToString("0.000", Pt)} €", $"{NomeCombustivel(principal.Combustivel)} mais barato", "positivo"));
+                indicadores.Add(new Indicador($"{precos.Minimo.ToString("0.000", Pt)} €", T($"{NomeCombustivel(principal.Combustivel)} mais barato", $"cheapest {NomeCombustivel(principal.Combustivel)}"), "positivo"));
                 var melhor = precos.MaisBaratos[0];
-                itens.Add(new ItemCartao($"Mais barato em {precos.Concelho}: {melhor.Nome} ({melhor.Marca})",
-                    $"{(precos.Media - precos.Minimo).ToString("0.000", Pt)} €/L abaixo da média do concelho"));
+                itens.Add(new ItemCartao(T($"Mais barato em {precos.Concelho}: {melhor.Nome} ({melhor.Marca})", $"Cheapest in {precos.Concelho}: {melhor.Nome} ({melhor.Marca})"),
+                    T($"{(precos.Media - precos.Minimo).ToString("0.000", Pt)} €/L abaixo da média do concelho", $"{(precos.Media - precos.Minimo).ToString("0.000", Pt)} €/L below the municipal average")));
             }
         }
 
         itens.AddRange(prazos.Skip(1).Take(2).Select(p => new ItemCartao(p.Titulo, p.Data.ToString("dd/MM/yyyy"))));
-        return new CartaoPainel(Id, Nome, $"{veiculos.Count} {(veiculos.Count == 1 ? "veículo" : "veículos")}.", itens, emFalta) { Indicadores = indicadores };
+        return new CartaoPainel(Id, Nome, $"{veiculos.Count} {(veiculos.Count == 1 ? T("veículo", "vehicle") : T("veículos", "vehicles"))}.", itens, emFalta) { Indicadores = indicadores };
     }
 
     public async Task<IReadOnlyList<AvisoPrazo>> ObterAvisosAsync(ContextoUtilizador contexto, CancellationToken ct)
@@ -302,24 +303,24 @@ public sealed class ModuloCarro : IModulo
 
     public static string NomeCombustivel(Combustivel c) => c switch
     {
-        Combustivel.GasoleoSimples => "Gasóleo simples",
-        Combustivel.GasoleoEspecial => "Gasóleo especial",
-        Combustivel.Gasolina95 => "Gasolina 95",
-        Combustivel.Gasolina95Especial => "Gasolina 95 especial",
-        Combustivel.Gasolina98 => "Gasolina 98",
-        Combustivel.Gpl => "GPL",
-        _ => "Elétrico",
+        Combustivel.GasoleoSimples => T("Gasóleo simples", "Diesel"),
+        Combustivel.GasoleoEspecial => T("Gasóleo especial", "Premium diesel"),
+        Combustivel.Gasolina95 => T("Gasolina 95", "Petrol 95"),
+        Combustivel.Gasolina95Especial => T("Gasolina 95 especial", "Premium petrol 95"),
+        Combustivel.Gasolina98 => T("Gasolina 98", "Petrol 98"),
+        Combustivel.Gpl => T("GPL", "LPG"),
+        _ => T("Elétrico", "Electric"),
     };
 
     private static object Vista(PrazoVeiculo p, DateOnly hoje) =>
         new { p.VeiculoId, p.Tipo, p.Data, p.Titulo, p.Descricao, p.Link, DiasEmFalta = p.DiasEmFalta(hoje) };
 
     private static IResult? Validar(DadosVeiculo d, DateOnly hoje) =>
-        string.IsNullOrWhiteSpace(d.Nome) ? Problema("Nome", "Dá um nome ao veículo (ex.: \"Clio\").")
-        : d.DataPrimeiraMatricula > hoje || d.DataPrimeiraMatricula.Year < 1950 ? Problema("DataPrimeiraMatricula", "Indica a data da primeira matrícula (está no documento único).")
-        : d.Cilindrada is < 0 or > 10_000 ? Problema("Cilindrada", "A cilindrada vai de 0 a 10 000 cm³ (campo P.1 do certificado de matrícula).")
-        : d.EmissoesCo2 is < 0 or > 1_000 ? Problema("EmissoesCo2", "As emissões de CO2 vão de 0 a 1000 g/km (campo V.7).")
-        : d.ValorSeguroAnual is < 0 ? Problema("ValorSeguroAnual", "O valor do seguro não pode ser negativo.")
+        string.IsNullOrWhiteSpace(d.Nome) ? Problema("Nome", T("Dá um nome ao veículo (ex.: \"Clio\").", "Give the vehicle a name (e.g. \"Clio\")."))
+        : d.DataPrimeiraMatricula > hoje || d.DataPrimeiraMatricula.Year < 1950 ? Problema("DataPrimeiraMatricula", T("Indica a data da primeira matrícula (está no documento único).", "Enter the first registration date (it is on the registration document)."))
+        : d.Cilindrada is < 0 or > 10_000 ? Problema("Cilindrada", T("A cilindrada vai de 0 a 10 000 cm³ (campo P.1 do certificado de matrícula).", "Engine size ranges from 0 to 10,000 cm³ (field P.1 of the registration certificate)."))
+        : d.EmissoesCo2 is < 0 or > 1_000 ? Problema("EmissoesCo2", T("As emissões de CO2 vão de 0 a 1000 g/km (campo V.7).", "CO2 emissions range from 0 to 1000 g/km (field V.7)."))
+        : d.ValorSeguroAnual is < 0 ? Problema("ValorSeguroAnual", T("O valor do seguro não pode ser negativo.", "The insurance amount cannot be negative."))
         : null;
 
     private static IResult Problema(string campo, string mensagem) =>

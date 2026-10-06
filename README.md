@@ -18,7 +18,7 @@ Estado: **fase 1 (fundações)**: backend com contas, perfil, preferências e pa
 ```bash
 dotnet run --project src/Portal.Api --launch-profile http   # API
 cd web && npm install && npm run dev                        # frontend
-dotnet test                                                 # 170 testes
+dotnet test                                                 # 175 testes
 ```
 
 | Documento | Conteúdo |
@@ -37,6 +37,7 @@ dotnet test                                                 # 170 testes
 | [docs/avisos.md](docs/avisos.md) | Avisos de prazos por email: como funcionam e como ligar um servidor de email |
 | [docs/exemplos-corretoras/](docs/exemplos-corretoras/) | Ficheiros de exemplo de cada corretora, para experimentar a importação |
 | [docs/assistente.md](docs/assistente.md) | Assistente de IA: ferramentas, fornecedor, nota sobre os dados |
+| [docs/linguas.md](docs/linguas.md) | Português e inglês: seletor PT/EN, como o servidor escolhe a língua, o que fica igual |
 | [docs/demonstracao.md](docs/demonstracao.md) | Conta de demonstração: entrar sem convite, só de leitura, reposta todos os dias |
 | [docs/99-decisoes-e-proximos-passos.md](docs/99-decisoes-e-proximos-passos.md) | Decisões em aberto e plano |
 | [docs/desenvolvimento.md](docs/desenvolvimento.md) | Estrutura do código, como correr, como acrescentar uma secção |
