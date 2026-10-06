@@ -47,6 +47,7 @@ await app.PrepararBaseDeDadosAsync();
 app.UseProducao();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseDemoSoLeitura();
 
 app.MapGroup("/api/auth").MapIdentityApi<Utilizador>();
 app.MapPost("/api/auth/logout", async (Microsoft.AspNetCore.Identity.SignInManager<Utilizador> signIn) =>
@@ -60,6 +61,7 @@ app.MapPainel();
 app.MapModulos();
 app.MapAssistente();
 app.MapAvisos();
+app.MapDemo();
 app.MapFrontend();
 
 app.Run();

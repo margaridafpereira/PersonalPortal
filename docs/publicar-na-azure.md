@@ -40,6 +40,7 @@ Web App → **Definições → Variáveis de ambiente** → **Definições da ap
 | `Email__ChaveExecucao` | uma frase secreta longa (20+ caracteres, ex.: gerada num gestor de palavras-passe) | Protege o endereço que dispara os avisos |
 | `TZ` | `Europe/Lisbon` | "Hoje" e as 8h em hora portuguesa |
 | `Rede__ProxyComCredenciaisWindows` | `false` | Só faz sentido na rede da empresa |
+| `Demo__Ativa` | `true` (por omissão) ou `false` | Botão "Experimentar com dados de exemplo": conta de demonstração só de leitura (ver `docs/demonstracao.md`) |
 
 Para enviar emails de verdade (em vez de os gravar numa pasta), acrescentar também os de `docs/avisos.md` (`Email__Modo=Smtp`, `Email__Servidor`, `Email__Utilizador`, `Email__PalavraPasse`, `Email__Remetente`…).
 

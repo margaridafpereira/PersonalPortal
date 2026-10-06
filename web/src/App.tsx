@@ -31,6 +31,7 @@ export default function App() {
   const [email, setEmail] = useState<string | null | undefined>(undefined)
   const [pagina, setPagina] = useState<Pagina>(paginaDoEndereco)
   const [ativas, setAtivas] = useState<string[] | null>(null)
+  const [emDemo, setEmDemo] = useState(false)
 
   const verificarSessao = useCallback(() => {
     api.quemSou()
@@ -44,6 +45,10 @@ export default function App() {
   useEffect(() => {
     if (email) api.preferencias().then(p => setAtivas(p.seccoesAtivas))
   }, [email, pagina])
+
+  useEffect(() => {
+    if (email) api.demo().then(d => setEmDemo(d.emDemo)).catch(() => setEmDemo(false))
+  }, [email])
 
   useEffect(() => {
     const aoMudar = () => { setPagina(paginaDoEndereco()); window.scrollTo(0, 0) }
@@ -79,6 +84,11 @@ export default function App() {
           </button>
         </div>
       </header>
+      {emDemo && (
+        <p className="faixa-demo" role="status">
+          Estás na <strong>conta de demonstração</strong>: os dados são fictícios e não podes alterar nada. Repostos todos os dias.
+        </p>
+      )}
       <main>
         {pagina === 'painel' && <Painel email={email} />}
         {pagina === 'apoios' && <ApoiosPagina />}

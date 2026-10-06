@@ -327,6 +327,10 @@ button.icone { background: none; color: var(--texto); border: 1px solid var(--bo
 .entrar { width: min(420px, 100%); display: flex; flex-direction: column; gap: 14px; padding: 32px; }
 .entrar h1 { margin: 0; }
 .entrar p { margin: 0; }
+.demo-entrada { display: flex; flex-direction: column; gap: 6px; padding-top: 14px; border-top: 1px solid var(--borda); }
+button.secundario { background: var(--acento-suave); color: var(--acento); }
+
+.faixa-demo { margin: 0; padding: 10px 16px; text-align: center; font-size: 0.9rem; background: var(--ambar-suave); color: var(--ambar); border-bottom: 1px solid var(--borda); }
 
 /* ---------- Carro e investimentos ---------- */
 

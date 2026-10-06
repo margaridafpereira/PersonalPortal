@@ -30,7 +30,7 @@ public sealed class ServicoAvisos(PortalDbContext db, IEnumerable<IModulo> modul
     {
         var hoje = DateOnly.FromDateTime(agora.LocalDateTime);
         // Todas as contas menos as que desligaram os alertas: quem nunca abriu as preferências tem-nos ligados por omissão.
-        var comAlertas = await db.Users.Select(u => u.Id)
+        var comAlertas = await db.Users.Where(u => u.Email != Demo.Email).Select(u => u.Id)
             .Where(id => !db.Preferencias.Any(p => p.UtilizadorId == id && !p.AlertasEmail))
             .ToListAsync(ct);
         var enviados = 0;

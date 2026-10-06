@@ -397,6 +397,8 @@ export const api = {
   entrar: (email: string, password: string) => pedido<void>('POST', '/api/auth/login?useCookies=true', { email, password }),
   registar: (email: string, password: string) => pedido<void>('POST', '/api/auth/register', { email, password }),
   sair: () => pedido<void>('POST', '/api/auth/logout'),
+  demo: () => pedido<{ ativa: boolean; emDemo: boolean }>('GET', '/api/demo'),
+  entrarDemo: () => pedido<void>('POST', '/api/demo/entrar'),
   quemSou: async () => {
     const resposta = await fetch('/api/auth/manage/info', { credentials: 'same-origin' })
     if (resposta.status === 401) throw new NaoAutenticado()
