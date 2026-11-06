@@ -18,7 +18,7 @@ portal.azure.com → **Criar um recurso** → **Aplicação Web**:
 | Grupo de recursos | novo, ex.: `personal-portal_group` |
 | Nome | ex.: `personal-portal` |
 | Publicar | Código |
-| Pilha de runtime | .NET 9 (passar para .NET 10 antes de 10/11/2026, quando o .NET 9 deixa de ter suporte) |
+| Pilha de runtime | .NET 10 (LTS, com suporte até novembro de 2028) |
 | Sistema operativo | Linux |
 | Região | uma europeia que aceite subscrições novas: North Europe, Sweden Central, France Central, Spain Central… (West Europe pode recusar: "not accepting new customers") |
 | Plano de preços | **Free F1** |
